@@ -1,0 +1,764 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=no">
+  <meta name="apple-mobile-web-app-capable" content="yes">
+  <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+  <title>MagicPhone</title>
+  <style>
+    * { margin: 0; padding: 0; box-sizing: border-box; -webkit-tap-highlight-color: transparent; }
+
+    body {
+      background: #0a0a0a;
+      color: #fff;
+      font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif;
+      min-height: 100vh;
+      overflow: hidden;
+    }
+
+    /* ── PAGE DE SÉLECTION ── */
+    #selection-page {
+      display: flex;
+      flex-direction: column;
+      height: 100vh;
+      padding: 20px;
+      overflow-y: auto;
+    }
+
+    h1 {
+      font-size: 28px;
+      font-weight: 700;
+      letter-spacing: -0.5px;
+      margin-bottom: 6px;
+    }
+
+    .subtitle {
+      font-size: 13px;
+      color: #666;
+      margin-bottom: 24px;
+    }
+
+    .section-title {
+      font-size: 11px;
+      font-weight: 600;
+      color: #555;
+      letter-spacing: 1px;
+      text-transform: uppercase;
+      margin-bottom: 12px;
+    }
+
+    /* Grille d'objets */
+    .objects-grid {
+      display: grid;
+      grid-template-columns: repeat(4, 1fr);
+      gap: 10px;
+      margin-bottom: 24px;
+    }
+
+    .object-item {
+      aspect-ratio: 2/3;
+      background: #1a1a1a;
+      border-radius: 10px;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      cursor: pointer;
+      border: 2px solid transparent;
+      transition: border-color 0.2s;
+      overflow: hidden;
+      position: relative;
+    }
+
+    .object-item.selected {
+      border-color: #fff;
+    }
+
+    .object-item img {
+      width: 85%;
+      height: 85%;
+      object-fit: contain;
+    }
+
+    .object-item.add-btn {
+      background: #1a1a1a;
+      border: 2px dashed #333;
+      font-size: 28px;
+      color: #444;
+    }
+
+    /* Réglages */
+    .settings-block {
+      background: #111;
+      border-radius: 14px;
+      padding: 16px;
+      margin-bottom: 16px;
+    }
+
+    .setting-row {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      padding: 10px 0;
+      border-bottom: 1px solid #1e1e1e;
+    }
+
+    .setting-row:last-child { border-bottom: none; }
+
+    .setting-label { font-size: 15px; }
+
+    .setting-value {
+      font-size: 14px;
+      color: #888;
+    }
+
+    input[type="range"] {
+      -webkit-appearance: none;
+      width: 120px;
+      height: 4px;
+      background: #333;
+      border-radius: 2px;
+      outline: none;
+    }
+
+    input[type="range"]::-webkit-slider-thumb {
+      -webkit-appearance: none;
+      width: 18px;
+      height: 18px;
+      background: #fff;
+      border-radius: 50%;
+    }
+
+    /* Toggle switch */
+    .toggle {
+      width: 44px;
+      height: 26px;
+      background: #333;
+      border-radius: 13px;
+      position: relative;
+      cursor: pointer;
+      transition: background 0.2s;
+    }
+
+    .toggle.on { background: #4cd964; }
+
+    .toggle::after {
+      content: '';
+      position: absolute;
+      width: 22px;
+      height: 22px;
+      background: #fff;
+      border-radius: 50%;
+      top: 2px;
+      left: 2px;
+      transition: left 0.2s;
+    }
+
+    .toggle.on::after { left: 20px; }
+
+    /* Sélecteur de déclencheur */
+    .trigger-options {
+      display: grid;
+      grid-template-columns: repeat(3, 1fr);
+      gap: 8px;
+      margin-top: 10px;
+    }
+
+    .trigger-btn {
+      background: #1e1e1e;
+      border: 2px solid transparent;
+      border-radius: 10px;
+      padding: 10px 6px;
+      text-align: center;
+      font-size: 12px;
+      color: #888;
+      cursor: pointer;
+      transition: all 0.2s;
+    }
+
+    .trigger-btn.selected {
+      border-color: #fff;
+      color: #fff;
+    }
+
+    .trigger-icon { font-size: 20px; margin-bottom: 4px; }
+
+    /* Bouton lancer */
+    #launch-btn {
+      width: 100%;
+      padding: 18px;
+      background: #fff;
+      color: #000;
+      border: none;
+      border-radius: 14px;
+      font-size: 17px;
+      font-weight: 600;
+      cursor: pointer;
+      margin-top: 8px;
+      margin-bottom: 30px;
+    }
+
+    /* ── PAGE DE PERFORMANCE ── */
+    #performance-page {
+      display: none;
+      position: fixed;
+      inset: 0;
+      background: #000;
+      z-index: 100;
+    }
+
+    /* Fond d'écran simulé */
+    #wallpaper {
+      position: absolute;
+      inset: 0;
+      background-size: cover;
+      background-position: center;
+      transition: transform 0.3s ease;
+    }
+
+    /* Horloge */
+    #clock {
+      position: absolute;
+      top: 60px;
+      left: 50%;
+      transform: translateX(-50%);
+      text-align: center;
+      z-index: 10;
+      display: none;
+    }
+
+    #clock-time {
+      font-size: 72px;
+      font-weight: 200;
+      letter-spacing: -2px;
+    }
+
+    #clock-date {
+      font-size: 16px;
+      color: rgba(255,255,255,0.8);
+    }
+
+    /* Objet affiché */
+    #object-display {
+      position: absolute;
+      inset: 0;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      opacity: 0;
+      transition: opacity 0.3s ease;
+      z-index: 20;
+    }
+
+    #object-display.visible { opacity: 1; }
+
+    #object-img {
+      object-fit: contain;
+      transform-origin: center;
+      transition: transform 0.1s ease-out;
+      touch-action: none;
+    }
+
+    /* Zone de tap invisible dans les coins */
+    .tap-zone {
+      position: absolute;
+      width: 80px;
+      height: 80px;
+      z-index: 50;
+    }
+
+    #tap-tl { top: 0; left: 0; }
+    #tap-tr { top: 0; right: 0; }
+    #tap-bl { bottom: 0; left: 0; }
+    #tap-br { bottom: 0; right: 0; }
+    #tap-center {
+      top: 50%; left: 50%;
+      transform: translate(-50%, -50%);
+    }
+  </style>
+</head>
+<body>
+
+<!-- ══ PAGE SÉLECTION ══ -->
+<div id="selection-page">
+  <h1>MagicPhone</h1>
+  <p class="subtitle">Configure ton tour avant de performer</p>
+
+  <p class="section-title">Objet à faire apparaître</p>
+  <div class="objects-grid" id="objects-grid">
+    <!-- Rempli dynamiquement -->
+    <div class="object-item add-btn" id="add-object-btn" onclick="importObject()">+</div>
+  </div>
+
+  <p class="section-title">Réglages</p>
+
+  <div class="settings-block">
+    <div class="setting-row">
+      <span class="setting-label">Taille de l'objet</span>
+      <input type="range" id="size-slider" min="20" max="100" value="70"
+        oninput="document.getElementById('size-val').textContent = this.value + '%'">
+      <span class="setting-value" id="size-val">70%</span>
+    </div>
+    <div class="setting-row">
+      <span class="setting-label">Vitesse d'apparition</span>
+      <input type="range" id="speed-slider" min="100" max="1000" value="300"
+        oninput="document.getElementById('speed-val').textContent = this.value + 'ms'">
+      <span class="setting-value" id="speed-val">300ms</span>
+    </div>
+    <div class="setting-row">
+      <span class="setting-label">Effet parallaxe</span>
+      <div class="toggle on" id="toggle-parallax" onclick="toggleSetting(this)"></div>
+    </div>
+    <div class="setting-row">
+      <span class="setting-label">Vibration</span>
+      <div class="toggle on" id="toggle-vibration" onclick="toggleSetting(this)"></div>
+    </div>
+    <div class="setting-row">
+      <span class="setting-label">Son</span>
+      <div class="toggle" id="toggle-sound" onclick="toggleSetting(this)"></div>
+    </div>
+    <div class="setting-row">
+      <span class="setting-label">Horloge</span>
+      <div class="toggle on" id="toggle-clock" onclick="toggleSetting(this)"></div>
+    </div>
+    <div class="setting-row">
+      <span class="setting-label">Écran toujours allumé</span>
+      <div class="toggle on" id="toggle-wakelock" onclick="toggleSetting(this)"></div>
+    </div>
+    <div class="setting-row">
+      <span class="setting-label">Mode répétition</span>
+      <div class="toggle" id="toggle-repeat" onclick="toggleSetting(this)"></div>
+    </div>
+  </div>
+
+  <p class="section-title">Déclencheur</p>
+  <div class="settings-block">
+    <div class="trigger-options" id="trigger-options">
+      <div class="trigger-btn selected" data-trigger="shake">
+        <div class="trigger-icon">📳</div>Shake
+      </div>
+      <div class="trigger-btn" data-trigger="tap-tl">
+        <div class="trigger-icon">↖️</div>Coin haut G
+      </div>
+      <div class="trigger-btn" data-trigger="tap-tr">
+        <div class="trigger-icon">↗️</div>Coin haut D
+      </div>
+      <div class="trigger-btn" data-trigger="tap-bl">
+        <div class="trigger-icon">↙️</div>Coin bas G
+      </div>
+      <div class="trigger-btn" data-trigger="tap-br">
+        <div class="trigger-icon">↘️</div>Coin bas D
+      </div>
+      <div class="trigger-btn" data-trigger="tap-center">
+        <div class="trigger-icon">⊙</div>Centre
+      </div>
+    </div>
+  </div>
+
+  <p class="section-title">Fond d'écran (optionnel)</p>
+  <div class="settings-block">
+    <div class="setting-row">
+      <span class="setting-label">Fond d'écran 1</span>
+      <span class="setting-value" id="wp1-name">Non défini</span>
+      <input type="file" id="wp1-input" accept="image/*" style="display:none" onchange="loadWallpaper(1, this)">
+      <button onclick="document.getElementById('wp1-input').click()" style="background:#222;color:#fff;border:none;padding:6px 12px;border-radius:8px;font-size:13px">Choisir</button>
+    </div>
+    <div class="setting-row">
+      <span class="setting-label">Fond d'écran 2</span>
+      <span class="setting-value" id="wp2-name">Non défini</span>
+      <input type="file" id="wp2-input" accept="image/*" style="display:none" onchange="loadWallpaper(2, this)">
+      <button onclick="document.getElementById('wp2-input').click()" style="background:#222;color:#fff;border:none;padding:6px 12px;border-radius:8px;font-size:13px">Choisir</button>
+    </div>
+    <div class="setting-row">
+      <span class="setting-label">Fond d'écran 3</span>
+      <span class="setting-value" id="wp3-name">Non défini</span>
+      <input type="file" id="wp3-input" accept="image/*" style="display:none" onchange="loadWallpaper(3, this)">
+      <button onclick="document.getElementById('wp3-input').click()" style="background:#222;color:#fff;border:none;padding:6px 12px;border-radius:8px;font-size:13px">Choisir</button>
+    </div>
+  </div>
+
+  <button id="launch-btn" onclick="launch()">Lancer la performance</button>
+</div>
+
+<!-- ══ PAGE PERFORMANCE ══ -->
+<div id="performance-page">
+  <div id="wallpaper"></div>
+
+  <div id="clock">
+    <div id="clock-time">00:00</div>
+    <div id="clock-date"></div>
+  </div>
+
+  <!-- Zones de tap invisibles -->
+  <div class="tap-zone" id="tap-tl"></div>
+  <div class="tap-zone" id="tap-tr"></div>
+  <div class="tap-zone" id="tap-bl"></div>
+  <div class="tap-zone" id="tap-br"></div>
+  <div class="tap-zone" id="tap-center"></div>
+
+  <!-- Objet -->
+  <div id="object-display">
+    <img id="object-img" src="" alt="">
+  </div>
+</div>
+
+<input type="file" id="import-input" accept="image/*" style="display:none" onchange="handleImport(this)">
+
+<script>
+// ══ ÉTAT ══
+const state = {
+  objects: [], // { id, name, src }
+  selectedObject: null,
+  trigger: 'shake',
+  wallpapers: [null, null, null],
+  currentWallpaper: 0,
+  objectVisible: false,
+  settings: {
+    parallax: true,
+    vibration: true,
+    sound: false,
+    clock: true,
+    wakelock: true,
+    repeat: false,
+  }
+};
+
+let wakeLock = null;
+let clockInterval = null;
+let shakeThreshold = 15;
+let lastShake = 0;
+
+// ══ OBJETS PAR DÉFAUT (à remplacer par tes vraies images) ══
+const DEFAULT_OBJECTS = [
+  // Format : { id, name, src }
+  // Les images sont dans le repo, on les charge depuis GitHub Pages
+];
+
+// ══ CHARGEMENT ══
+window.onload = () => {
+  loadFromStorage();
+  renderObjects();
+  setupTriggerButtons();
+};
+
+function loadFromStorage() {
+  const saved = localStorage.getItem('magicphone_objects');
+  if (saved) state.objects = JSON.parse(saved);
+  const savedWp = localStorage.getItem('magicphone_wallpapers');
+  if (savedWp) state.wallpapers = JSON.parse(savedWp);
+  updateWallpaperNames();
+}
+
+function saveToStorage() {
+  localStorage.setItem('magicphone_objects', JSON.stringify(state.objects));
+  localStorage.setItem('magicphone_wallpapers', JSON.stringify(state.wallpapers));
+}
+
+// ══ GRILLE D'OBJETS ══
+function renderObjects() {
+  const grid = document.getElementById('objects-grid');
+  grid.innerHTML = '';
+
+  state.objects.forEach(obj => {
+    const div = document.createElement('div');
+    div.className = 'object-item' + (state.selectedObject?.id === obj.id ? ' selected' : '');
+    div.onclick = () => selectObject(obj);
+    div.innerHTML = `<img src="${obj.src}" alt="${obj.name}">`;
+    grid.appendChild(div);
+  });
+
+  const addBtn = document.createElement('div');
+  addBtn.className = 'object-item add-btn';
+  addBtn.onclick = importObject;
+  addBtn.textContent = '+';
+  grid.appendChild(addBtn);
+}
+
+function selectObject(obj) {
+  state.selectedObject = obj;
+  renderObjects();
+}
+
+function importObject() {
+  document.getElementById('import-input').click();
+}
+
+function handleImport(input) {
+  const file = input.files[0];
+  if (!file) return;
+  const reader = new FileReader();
+  reader.onload = (e) => {
+    const obj = { id: Date.now(), name: file.name, src: e.target.result };
+    state.objects.push(obj);
+    state.selectedObject = obj;
+    saveToStorage();
+    renderObjects();
+  };
+  reader.readAsDataURL(file);
+  input.value = '';
+}
+
+// ══ FOND D'ÉCRAN ══
+function loadWallpaper(index, input) {
+  const file = input.files[0];
+  if (!file) return;
+  const reader = new FileReader();
+  reader.onload = (e) => {
+    state.wallpapers[index - 1] = e.target.result;
+    saveToStorage();
+    updateWallpaperNames();
+  };
+  reader.readAsDataURL(file);
+}
+
+function updateWallpaperNames() {
+  for (let i = 1; i <= 3; i++) {
+    const el = document.getElementById(`wp${i}-name`);
+    el.textContent = state.wallpapers[i-1] ? '✓ Défini' : 'Non défini';
+  }
+}
+
+// ══ TOGGLES ══
+function toggleSetting(el) {
+  el.classList.toggle('on');
+  const key = el.id.replace('toggle-', '');
+  state.settings[key] = el.classList.contains('on');
+}
+
+// ══ DÉCLENCHEURS ══
+function setupTriggerButtons() {
+  document.querySelectorAll('.trigger-btn').forEach(btn => {
+    btn.onclick = () => {
+      document.querySelectorAll('.trigger-btn').forEach(b => b.classList.remove('selected'));
+      btn.classList.add('selected');
+      state.trigger = btn.dataset.trigger;
+    };
+  });
+}
+
+// ══ LANCEMENT ══
+async function launch() {
+  if (!state.selectedObject) {
+    alert('Sélectionne un objet d\'abord !');
+    return;
+  }
+
+  document.getElementById('selection-page').style.display = 'none';
+  document.getElementById('performance-page').style.display = 'block';
+
+  // Fond d'écran
+  const wp = state.wallpapers.find(w => w !== null);
+  if (wp) {
+    document.getElementById('wallpaper').style.backgroundImage = `url(${wp})`;
+    state.currentWallpaper = state.wallpapers.findIndex(w => w !== null);
+  }
+
+  // Objet
+  const img = document.getElementById('object-img');
+  img.src = state.selectedObject.src;
+  const size = document.getElementById('size-slider').value;
+  img.style.width = size + 'vw';
+  img.style.maxHeight = '90vh';
+
+  // Horloge
+  if (state.settings.clock) {
+    document.getElementById('clock').style.display = 'block';
+    updateClock();
+    clockInterval = setInterval(updateClock, 1000);
+  }
+
+  // Wake lock
+  if (state.settings.wakelock && navigator.wakeLock) {
+    try { wakeLock = await navigator.wakeLock.request('screen'); } catch(e) {}
+  }
+
+  // Déclencheurs
+  setupPerformanceTriggers();
+
+  // Parallaxe
+  if (state.settings.parallax) setupParallax();
+
+  // Swipe fond d'écran
+  setupWallpaperSwipe();
+
+  // Fermeture écran
+  document.addEventListener('visibilitychange', onVisibilityChange);
+}
+
+// ══ HORLOGE ══
+function updateClock() {
+  const now = new Date();
+  document.getElementById('clock-time').textContent =
+    now.getHours().toString().padStart(2,'0') + ':' +
+    now.getMinutes().toString().padStart(2,'0');
+  document.getElementById('clock-date').textContent =
+    now.toLocaleDateString('fr-FR', { weekday:'long', day:'numeric', month:'long' });
+}
+
+// ══ AFFICHAGE OBJET ══
+function showObject() {
+  if (state.objectVisible) return;
+  state.objectVisible = true;
+
+  const speed = document.getElementById('speed-slider').value;
+  const display = document.getElementById('object-display');
+  display.style.transition = `opacity ${speed}ms ease`;
+  display.classList.add('visible');
+
+  if (state.settings.vibration && navigator.vibrate) navigator.vibrate(50);
+}
+
+function hideObject() {
+  if (!state.objectVisible) return;
+  state.objectVisible = false;
+  document.getElementById('object-display').classList.remove('visible');
+
+  if (state.settings.repeat) {
+    // Prêt pour le prochain déclenchement
+  }
+}
+
+// ══ DÉCLENCHEURS PERFORMANCE ══
+function setupPerformanceTriggers() {
+  // Shake
+  if (state.trigger === 'shake') {
+    if (typeof DeviceMotionEvent?.requestPermission === 'function') {
+      DeviceMotionEvent.requestPermission().then(r => {
+        if (r === 'granted') window.addEventListener('devicemotion', onShake);
+      });
+    } else {
+      window.addEventListener('devicemotion', onShake);
+    }
+  }
+
+  // Tap dans un coin / centre
+  if (state.trigger.startsWith('tap-')) {
+    const zoneId = state.trigger; // ex: "tap-tl"
+    document.getElementById(zoneId).addEventListener('click', showObject);
+  }
+
+  // Swipe 3 doigts vers le bas → fermeture
+  setupThreeFingerSwipe();
+}
+
+function onShake(e) {
+  const acc = e.accelerationIncludingGravity;
+  if (!acc) return;
+  const total = Math.abs(acc.x) + Math.abs(acc.y) + Math.abs(acc.z);
+  const now = Date.now();
+  if (total > shakeThreshold && now - lastShake > 1000) {
+    lastShake = now;
+    showObject();
+  }
+}
+
+// ══ SWIPE 3 DOIGTS ══
+function setupThreeFingerSwipe() {
+  let startY = 0;
+  let fingers = 0;
+
+  document.getElementById('performance-page').addEventListener('touchstart', e => {
+    fingers = e.touches.length;
+    if (fingers === 3) startY = e.touches[0].clientY;
+  });
+
+  document.getElementById('performance-page').addEventListener('touchend', e => {
+    if (fingers === 3) {
+      const endY = e.changedTouches[0].clientY;
+      if (endY - startY > 80) exitPerformance();
+    }
+    fingers = 0;
+  });
+}
+
+// ══ SWIPE FOND D'ÉCRAN (1 doigt horizontal) ══
+function setupWallpaperSwipe() {
+  let startX = 0;
+  const wallpaper = document.getElementById('wallpaper');
+
+  document.getElementById('performance-page').addEventListener('touchstart', e => {
+    if (e.touches.length === 1) startX = e.touches[0].clientX;
+  });
+
+  document.getElementById('performance-page').addEventListener('touchend', e => {
+    if (e.changedTouches.length === 1) {
+      const diff = e.changedTouches[0].clientX - startX;
+      if (Math.abs(diff) > 60) {
+        const wps = state.wallpapers.filter(w => w !== null);
+        if (wps.length > 1) {
+          state.currentWallpaper = (state.currentWallpaper + (diff < 0 ? 1 : -1) + wps.length) % wps.length;
+          wallpaper.style.backgroundImage = `url(${wps[state.currentWallpaper]})`;
+        }
+      }
+    }
+  });
+}
+
+// ══ PINCH ZOOM (2 doigts) ══
+// Structure prête — sera activée avec le retournement plus tard
+let currentScale = 1;
+let initialDistance = 0;
+
+document.addEventListener('touchstart', e => {
+  if (e.touches.length === 2 && state.objectVisible) {
+    initialDistance = Math.hypot(
+      e.touches[0].clientX - e.touches[1].clientX,
+      e.touches[0].clientY - e.touches[1].clientY
+    );
+  }
+});
+
+document.addEventListener('touchmove', e => {
+  if (e.touches.length === 2 && state.objectVisible && initialDistance > 0) {
+    const dist = Math.hypot(
+      e.touches[0].clientX - e.touches[1].clientX,
+      e.touches[0].clientY - e.touches[1].clientY
+    );
+    currentScale = Math.min(Math.max(dist / initialDistance, 0.5), 3);
+    document.getElementById('object-img').style.transform = `scale(${currentScale})`;
+  }
+});
+
+// ══ PARALLAXE ══
+function setupParallax() {
+  const requestPermission = typeof DeviceOrientationEvent?.requestPermission === 'function';
+  const apply = () => {
+    window.addEventListener('deviceorientation', e => {
+      if (!state.objectVisible) return;
+      const x = (e.gamma || 0) / 30;
+      const y = (e.beta || 0) / 30;
+      document.getElementById('object-img').style.transform =
+        `translate(${x * 15}px, ${y * 10}px) scale(${currentScale})`;
+    });
+  };
+
+  if (requestPermission) {
+    DeviceOrientationEvent.requestPermission().then(r => {
+      if (r === 'granted') apply();
+    });
+  } else {
+    apply();
+  }
+}
+
+// ══ EXTINCTION ÉCRAN ══
+function onVisibilityChange() {
+  if (document.hidden) exitPerformance();
+}
+
+// ══ SORTIE PERFORMANCE ══
+function exitPerformance() {
+  hideObject();
+  document.getElementById('performance-page').style.display = 'none';
+  document.getElementById('selection-page').style.display = 'flex';
+  document.getElementById('clock').style.display = 'none';
+  clearInterval(clockInterval);
+  window.removeEventListener('devicemotion', onShake);
+  document.removeEventListener('visibilitychange', onVisibilityChange);
+  if (wakeLock) { wakeLock.release(); wakeLock = null; }
+  currentScale = 1;
+  state.objectVisible = false;
+}
+</script>
+</body>
+</html>
