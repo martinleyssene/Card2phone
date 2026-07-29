@@ -195,18 +195,22 @@
     }
 
     #clock {
-      position: absolute;
-      top: 60px;
-      left: 50%;
-      transform: translateX(-50%);
-      text-align: center;
-      z-index: 10;
-      display: none;
-      pointer-events: none;
-    }
+  position: absolute;
+  top: 0;
+  left: 0;
+  right: 0;
+  height: 44px;
+  display: none;
+  align-items: center;
+  justify-content: space-between;
+  padding: 0 16px;
+  z-index: 10;
+  pointer-events: none;
+  background: rgba(0,0,0,0.2);
+}
 
-    #clock-time { font-size: 72px; font-weight: 200; letter-spacing: -2px; }
-    #clock-date { font-size: 16px; color: rgba(255,255,255,0.8); }
+#clock-time { font-size: 15px; font-weight: 600; }
+#clock-date { font-size: 13px; color: rgba(255,255,255,0.8); }
 
     #object-display {
       position: absolute;
@@ -548,7 +552,7 @@ async function launch() {
 
   // Horloge
   if (state.settings.clock) {
-    document.getElementById('clock').style.display = 'block';
+    document.getElementById('clock').style.display = 'flex';
     updateClock();
     clockInterval = setInterval(updateClock, 1000);
   }
