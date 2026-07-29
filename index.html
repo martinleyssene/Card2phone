@@ -194,24 +194,6 @@
       background-position: center;
     }
 
-    #clock {
-  position: absolute;
-  top: 0;
-  left: 0;
-  right: 0;
-  height: 44px;
-  display: none;
-  align-items: center;
-  justify-content: space-between;
-  padding: 0 16px;
-  z-index: 10;
-  pointer-events: none;
-  background: rgba(0,0,0,0.2);
-}
-
-#clock-time { font-size: 15px; font-weight: 600; }
-#clock-date { font-size: 13px; color: rgba(255,255,255,0.8); }
-
     #object-display {
       position: absolute;
       inset: 0;
@@ -357,10 +339,6 @@
 <!-- PERFORMANCE -->
 <div id="performance-page">
   <div id="wallpaper"></div>
-  <div id="clock">
-    <div id="clock-time">00:00</div>
-    <div id="clock-date"></div>
-  </div>
   <div class="tap-zone" id="tap-tl"></div>
   <div class="tap-zone" id="tap-tr"></div>
   <div class="tap-zone" id="tap-bl"></div>
@@ -375,7 +353,31 @@
 
 <script>
 const state = {
-  objects: [],
+  objects: [
+    { id: 'default_1', name: 'As de pique', src: 'As de pique.PNG' },
+    { id: 'default_2', name: 'Dos rouge', src: 'dos rouge.PNG' },
+    { id: 'default_3', name: 'Dos bleu', src: 'dos bleu.PNG' },
+    { id: 'default_4', name: 'Joker couleur', src: 'Joker (couleur).PNG' },
+    { id: 'default_5', name: 'Joker N&B', src: 'Joker (sans couleur).PNG' },
+    { id: 'default_6', name: '2 euros', src: '2 euros.PNG' },
+    { id: 'default_7', name: '5 de trèfle', src: '5 de trèfle.PNG' },
+    { id: 'default_8', name: '7 de carreau', src: '7 de carreau.PNG' },
+    { id: 'default_9', name: '7 de trèfle', src: '7 de trèfle.PNG' },
+    { id: 'default_10', name: '9 de carreau', src: '9 de carreau.PNG' },
+    { id: 'default_11', name: 'Paquet bleu', src: 'Paquet bleu.PNG' },
+  ],objects: [
+    { id: 'default_1', name: 'As de pique', src: 'As de pique.PNG' },
+    { id: 'default_2', name: 'Dos rouge', src: 'dos rouge.PNG' },
+    { id: 'default_3', name: 'Dos bleu', src: 'dos bleu.PNG' },
+    { id: 'default_4', name: 'Joker couleur', src: 'Joker (couleur).PNG' },
+    { id: 'default_5', name: 'Joker N&B', src: 'Joker (sans couleur).PNG' },
+    { id: 'default_6', name: '2 euros', src: '2 euros.PNG' },
+    { id: 'default_7', name: '5 de trèfle', src: '5 de trèfle.PNG' },
+    { id: 'default_8', name: '7 de carreau', src: '7 de carreau.PNG' },
+    { id: 'default_9', name: '7 de trèfle', src: '7 de trèfle.PNG' },
+    { id: 'default_10', name: '9 de carreau', src: '9 de carreau.PNG' },
+    { id: 'default_11', name: 'Paquet bleu', src: 'Paquet bleu.PNG' },
+  ],
   selectedObject: null,
   trigger: 'shake',
   wallpapers: [null, null, null],
@@ -405,7 +407,11 @@ window.onload = () => {
 function loadFromStorage() {
   try {
     const objs = localStorage.getItem('mp_objects');
-    if (objs) state.objects = JSON.parse(objs);
+    if (objs) {
+      const imported = JSON.parse(objs);
+      const importedOnly = imported.filter(o => !o.id.toString().startsWith('default_'));
+      state.objects = [...state.objects, ...importedOnly];
+    }
     const wps = localStorage.getItem('mp_wallpapers');
     if (wps) state.wallpapers = JSON.parse(wps);
   } catch(e) {}
