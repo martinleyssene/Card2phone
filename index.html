@@ -199,7 +199,7 @@
       inset: 0;
       opacity: 0;
       pointer-events: none;
-      z-index: 20;
+      z-index: 15;
     }
 
     #object-display.visible { opacity: 1; pointer-events: all; }
@@ -217,7 +217,8 @@
       position: absolute;
       width: 80px;
       height: 80px;
-      z-index: 50;
+      z-index: 60;
+      background: rgba(255,0,0,0.3);
     }
 
     #tap-tl { top: 0; left: 0; }
@@ -355,7 +356,7 @@
 const state = {
   objects: [
     { id: 'default_1', name: 'As de pique', src: 'As de pique.PNG' },
-    { id: 'default_2', name: 'Dos rouge', src: 'dos rouge.PNG' },
+    { id: 'default_2', name: 'Dos rouge', src: 'dos rouge.png' },
     { id: 'default_3', name: 'Dos bleu', src: 'dos bleu.PNG' },
     { id: 'default_4', name: 'Joker couleur', src: 'Joker (couleur).PNG' },
     { id: 'default_5', name: 'Joker N&B', src: 'Joker (sans couleur).PNG' },
@@ -556,12 +557,6 @@ async function launch() {
   img.style.transform = 'translate(-50%, -50%)';
   currentScale = 1;
 
-  // Horloge
-  if (state.settings.clock) {
-    document.getElementById('clock').style.display = 'flex';
-    updateClock();
-    clockInterval = setInterval(updateClock, 1000);
-  }
 
   // Wake lock
   if (state.settings.wakelock && navigator.wakeLock) {
@@ -605,6 +600,7 @@ function hideObject() {
 
 // ── DÉCLENCHEURS PERFORMANCE ──
 function setupPerformanceTriggers() {
+  console.log('Trigger actif:', state.trigger);
   if (state.trigger === 'shake') {
     if (typeof DeviceMotionEvent?.requestPermission === 'function') {
       DeviceMotionEvent.requestPermission().then(r => {
@@ -614,7 +610,11 @@ function setupPerformanceTriggers() {
       window.addEventListener('devicemotion', onShake);
     }
   } else if (state.trigger.startsWith('tap-')) {
-    document.getElementById(state.trigger).addEventListener('click', showObject);
+    const zone = document.getElementById(state.trigger);
+    if (zone) {
+      zone.addEventListener('click', showObject);
+      zone.addEventListener('touchend', showObject);
+    }
   }
 }
 
