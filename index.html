@@ -194,12 +194,30 @@
       background-position: center;
     }
 
+    #clock {
+  position: absolute;
+  top: 0;
+  left: 0;
+  right: 0;
+  height: 44px;
+  display: none;
+  align-items: center;
+  justify-content: space-between;
+  padding: 0 16px;
+  z-index: 10;
+  pointer-events: none;
+  background: rgba(0,0,0,0.2);
+}
+
+#clock-time { font-size: 15px; font-weight: 600; }
+#clock-date { font-size: 13px; color: rgba(255,255,255,0.8); }
+
     #object-display {
       position: absolute;
       inset: 0;
       opacity: 0;
       pointer-events: none;
-      z-index: 15;
+      z-index: 20;
     }
 
     #object-display.visible { opacity: 1; pointer-events: all; }
@@ -217,7 +235,7 @@
       position: absolute;
       width: 80px;
       height: 80px;
-      z-index: 60;
+      z-index: 50;
     }
 
     #tap-tl { top: 0; left: 0; }
@@ -339,6 +357,10 @@
 <!-- PERFORMANCE -->
 <div id="performance-page">
   <div id="wallpaper"></div>
+  <div id="clock">
+    <div id="clock-time">00:00</div>
+    <div id="clock-date"></div>
+  </div>
   <div class="tap-zone" id="tap-tl"></div>
   <div class="tap-zone" id="tap-tr"></div>
   <div class="tap-zone" id="tap-bl"></div>
@@ -353,31 +375,7 @@
 
 <script>
 const state = {
-  objects: [
-    { id: 'default_1', name: 'As de pique', src: 'As de pique.PNG' },
-    { id: 'default_2', name: 'Dos rouge', src: 'dos rouge.png' },
-    { id: 'default_3', name: 'Dos bleu', src: 'dos bleu.PNG' },
-    { id: 'default_4', name: 'Joker couleur', src: 'Joker (couleur).PNG' },
-    { id: 'default_5', name: 'Joker N&B', src: 'Joker (sans couleur).PNG' },
-    { id: 'default_6', name: '2 euros', src: '2 euros.PNG' },
-    { id: 'default_7', name: '5 de trèfle', src: '5 de trèfle.PNG' },
-    { id: 'default_8', name: '7 de carreau', src: '7 de carreau.PNG' },
-    { id: 'default_9', name: '7 de trèfle', src: '7 de trèfle.PNG' },
-    { id: 'default_10', name: '9 de carreau', src: '9 de carreau.PNG' },
-    { id: 'default_11', name: 'Paquet bleu', src: 'Paquet bleu.PNG' },
-  ],objects: [
-    { id: 'default_1', name: 'As de pique', src: 'As de pique.PNG' },
-    { id: 'default_2', name: 'Dos rouge', src: 'dos rouge.PNG' },
-    { id: 'default_3', name: 'Dos bleu', src: 'dos bleu.PNG' },
-    { id: 'default_4', name: 'Joker couleur', src: 'Joker (couleur).PNG' },
-    { id: 'default_5', name: 'Joker N&B', src: 'Joker (sans couleur).PNG' },
-    { id: 'default_6', name: '2 euros', src: '2 euros.PNG' },
-    { id: 'default_7', name: '5 de trèfle', src: '5 de trèfle.PNG' },
-    { id: 'default_8', name: '7 de carreau', src: '7 de carreau.PNG' },
-    { id: 'default_9', name: '7 de trèfle', src: '7 de trèfle.PNG' },
-    { id: 'default_10', name: '9 de carreau', src: '9 de carreau.PNG' },
-    { id: 'default_11', name: 'Paquet bleu', src: 'Paquet bleu.PNG' },
-  ],
+  objects: [],
   selectedObject: null,
   trigger: 'shake',
   wallpapers: [null, null, null],
@@ -414,14 +412,27 @@ function loadFromStorage() {
     }
     const wps = localStorage.getItem('mp_wallpapers');
     if (wps) state.wallpapers = JSON.parse(wps);
+    const settings = localStorage.getItem('mp_settings');
+    if (settings) state.settings = { ...state.settings, ...JSON.parse(settings) };
+    const trigger = localStorage.getItem('mp_trigger');
+    if (trigger) state.trigger = trigger;
+    const size = localStorage.getItem('mp_size');
+    if (size) document.getElementById('size-slider').value = size;
+    const speed = localStorage.getItem('mp_speed');
+    if (speed) document.getElementById('speed-slider').value = speed;
   } catch(e) {}
   updateWallpaperNames();
 }
 
 function saveToStorage() {
   try {
-    localStorage.setItem('mp_objects', JSON.stringify(state.objects));
+    const importedOnly = state.objects.filter(o => !o.id.toString().startsWith('default_'));
+    localStorage.setItem('mp_objects', JSON.stringify(importedOnly));
     localStorage.setItem('mp_wallpapers', JSON.stringify(state.wallpapers));
+    localStorage.setItem('mp_settings', JSON.stringify(state.settings));
+    localStorage.setItem('mp_trigger', state.trigger);
+    localStorage.setItem('mp_size', document.getElementById('size-slider').value);
+    localStorage.setItem('mp_speed', document.getElementById('speed-slider').value);
   } catch(e) {}
 }
 
@@ -468,6 +479,7 @@ function updateSize() {
   document.getElementById('size-val').textContent = val + '%';
   const img = document.getElementById('preview-img');
   if (img) img.style.width = val + '%';
+  saveToStorage();
 }
 
 function importObject() {
@@ -513,6 +525,7 @@ function toggleSetting(el) {
   el.classList.toggle('on');
   const key = el.id.replace('toggle-', '');
   state.settings[key] = el.classList.contains('on');
+  saveToStorage();
 }
 
 // ── DÉCLENCHEURS ──
@@ -522,6 +535,7 @@ function setupTriggerButtons() {
       document.querySelectorAll('.trigger-btn').forEach(b => b.classList.remove('selected'));
       btn.classList.add('selected');
       state.trigger = btn.dataset.trigger;
+      saveToStorage();
     };
   });
 }
@@ -556,6 +570,12 @@ async function launch() {
   img.style.transform = 'translate(-50%, -50%)';
   currentScale = 1;
 
+  // Horloge
+  if (state.settings.clock) {
+    document.getElementById('clock').style.display = 'block';
+    updateClock();
+    clockInterval = setInterval(updateClock, 1000);
+  }
 
   // Wake lock
   if (state.settings.wakelock && navigator.wakeLock) {
@@ -599,7 +619,6 @@ function hideObject() {
 
 // ── DÉCLENCHEURS PERFORMANCE ──
 function setupPerformanceTriggers() {
-  console.log('Trigger actif:', state.trigger);
   if (state.trigger === 'shake') {
     if (typeof DeviceMotionEvent?.requestPermission === 'function') {
       DeviceMotionEvent.requestPermission().then(r => {
@@ -609,11 +628,7 @@ function setupPerformanceTriggers() {
       window.addEventListener('devicemotion', onShake);
     }
   } else if (state.trigger.startsWith('tap-')) {
-    const zone = document.getElementById(state.trigger);
-    if (zone) {
-      zone.addEventListener('click', showObject);
-      zone.addEventListener('touchend', showObject);
-    }
+    document.getElementById(state.trigger).addEventListener('click', showObject);
   }
 }
 
@@ -653,7 +668,8 @@ function setupDragAndZoom() {
       pinchStartScale = currentScale;
     }
     e.stopPropagation();
-  }, { passive: true });
+    e.preventDefault();
+  }, { passive: false });
 
   img.addEventListener('touchmove', e => {
     if (e.touches.length === 1 && dragging) {
