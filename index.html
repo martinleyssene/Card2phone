@@ -292,10 +292,6 @@
       <div class="toggle" id="toggle-sound" onclick="toggleSetting(this)"></div>
     </div>
     <div class="setting-row">
-      <span class="setting-label">Horloge</span>
-      <div class="toggle on" id="toggle-clock" onclick="toggleSetting(this)"></div>
-    </div>
-    <div class="setting-row">
       <span class="setting-label">Écran toujours allumé</span>
       <div class="toggle on" id="toggle-wakelock" onclick="toggleSetting(this)"></div>
     </div>
@@ -357,10 +353,6 @@
 <!-- PERFORMANCE -->
 <div id="performance-page">
   <div id="wallpaper"></div>
-  <div id="clock">
-    <div id="clock-time">00:00</div>
-    <div id="clock-date"></div>
-  </div>
   <div class="tap-zone" id="tap-tl"></div>
   <div class="tap-zone" id="tap-tr"></div>
   <div class="tap-zone" id="tap-bl"></div>
@@ -395,12 +387,11 @@ const state = {
   objectVisible: false,
   settings: {
     parallax: true, vibration: true, sound: false,
-    clock: true, wakelock: true, repeat: false
+    wakelock: true, repeat: false
   }
 };
 
 let wakeLock = null;
-let clockInterval = null;
 let currentScale = 1;
 let currentX = 0;
 let currentY = 0;
@@ -588,12 +579,6 @@ async function launch() {
   img.style.transform = 'translate(-50%, -50%)';
   currentScale = 1;
 
-  // Horloge
-  if (state.settings.clock) {
-    document.getElementById('clock').style.display = 'block';
-    updateClock();
-    clockInterval = setInterval(updateClock, 1000);
-  }
 
   // Wake lock
   if (state.settings.wakelock && navigator.wakeLock) {
@@ -609,15 +594,6 @@ async function launch() {
   document.addEventListener('visibilitychange', onVisibilityChange);
 }
 
-// ── HORLOGE ──
-function updateClock() {
-  const now = new Date();
-  document.getElementById('clock-time').textContent =
-    now.getHours().toString().padStart(2,'0') + ':' +
-    now.getMinutes().toString().padStart(2,'0');
-  document.getElementById('clock-date').textContent =
-    now.toLocaleDateString('fr-FR', { weekday:'long', day:'numeric', month:'long' });
-}
 
 // ── AFFICHAGE OBJET ──
 function showObject() {
@@ -813,8 +789,6 @@ function exitPerformance() {
   hideObject();
   document.getElementById('performance-page').style.display = 'none';
   document.getElementById('selection-page').style.display = 'flex';
-  document.getElementById('clock').style.display = 'none';
-  clearInterval(clockInterval);
   window.removeEventListener('devicemotion', onShake);
   document.removeEventListener('visibilitychange', onVisibilityChange);
   if (wakeLock) { wakeLock.release(); wakeLock = null; }
