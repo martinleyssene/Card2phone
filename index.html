@@ -375,7 +375,19 @@
 
 <script>
 const state = {
-  objects: [],
+  objects: [
+    { id: 'default_1', name: 'As de pique', src: 'As de pique.PNG' },
+    { id: 'default_2', name: 'Dos rouge', src: 'dos rouge.png' },
+    { id: 'default_3', name: 'Dos bleu', src: 'dos bleu.PNG' },
+    { id: 'default_4', name: 'Joker couleur', src: 'Joker (couleur).PNG' },
+    { id: 'default_5', name: 'Joker N&B', src: 'Joker (sans couleur).PNG' },
+    { id: 'default_6', name: '2 euros', src: '2 euros.PNG' },
+    { id: 'default_7', name: '5 de trèfle', src: '5 de trèfle.PNG' },
+    { id: 'default_8', name: '7 de carreau', src: '7 de carreau.PNG' },
+    { id: 'default_9', name: '7 de trèfle', src: '7 de trèfle.PNG' },
+    { id: 'default_10', name: '9 de carreau', src: '9 de carreau.PNG' },
+    { id: 'default_11', name: 'Paquet bleu', src: 'Paquet bleu.PNG' },
+  ],
   selectedObject: null,
   trigger: 'shake',
   wallpapers: [null, null, null],
@@ -399,6 +411,16 @@ window.onload = () => {
   loadFromStorage();
   renderObjects();
   setupTriggerButtons();
+  const size = localStorage.getItem('mp_size');
+  if (size) {
+    document.getElementById('size-slider').value = size;
+    document.getElementById('size-val').textContent = size + '%';
+  }
+  const speed = localStorage.getItem('mp_speed');
+  if (speed) {
+    document.getElementById('speed-slider').value = speed;
+    document.getElementById('speed-val').textContent = speed + 'ms';
+  }
 };
 
 // ── STORAGE ──
@@ -416,10 +438,6 @@ function loadFromStorage() {
     if (settings) state.settings = { ...state.settings, ...JSON.parse(settings) };
     const trigger = localStorage.getItem('mp_trigger');
     if (trigger) state.trigger = trigger;
-    const size = localStorage.getItem('mp_size');
-    if (size) document.getElementById('size-slider').value = size;
-    const speed = localStorage.getItem('mp_speed');
-    if (speed) document.getElementById('speed-slider').value = speed;
   } catch(e) {}
   updateWallpaperNames();
 }
