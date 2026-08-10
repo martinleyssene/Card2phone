@@ -648,12 +648,20 @@ function hideObject(direction) {
 
 function checkIfOutOfBounds() {
   if (!state.objectVisible) return;
+  const img = document.getElementById('object-img');
+  const rect = img.getBoundingClientRect();
   const w = window.innerWidth;
   const h = window.innerHeight;
-  if (currentX > w) hideObject('right');
-  else if (currentX < 0) hideObject('left');
-  else if (currentY > h) hideObject('down');
-  else if (currentY < 0) hideObject('up');
+  const visibleX = Math.min(rect.right, w) - Math.max(rect.left, 0);
+  const visibleY = Math.min(rect.bottom, h) - Math.max(rect.top, 0);
+  const halfW = rect.width / 2;
+  const halfH = rect.height / 2;
+
+  if (visibleX < halfW) {
+    hideObject(currentX > w / 2 ? 'right' : 'left');
+  } else if (visibleY < halfH) {
+    hideObject(currentY > h / 2 ? 'down' : 'up');
+  }
 }
 
 // ── DÉCLENCHEURS PERFORMANCE ──
