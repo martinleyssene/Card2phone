@@ -619,9 +619,41 @@ function showObject() {
   if (state.settings.vibration && navigator.vibrate) navigator.vibrate(50);
 }
 
-function hideObject() {
+function hideObject(direction) {
+  if (!state.objectVisible) return;
   state.objectVisible = false;
-  document.getElementById('object-display').classList.remove('visible');
+  const img = document.getElementById('object-img');
+  const display = document.getElementById('object-display');
+  const speed = parseInt(document.getElementById('speed-slider').value);
+
+  let tx = 0, ty = 0;
+  const dist = Math.max(window.innerWidth, window.innerHeight);
+
+  if (direction === 'right') tx = dist;
+  else if (direction === 'left') tx = -dist;
+  else if (direction === 'down') ty = dist;
+  else if (direction === 'up') ty = -dist;
+
+  img.style.transition = `transform ${speed}ms ease-in`;
+  img.style.transform = `translate(calc(-50% + ${tx}px), calc(-50% + ${ty}px)) scale(${currentScale})`;
+
+  setTimeout(() => {
+    display.classList.remove('visible');
+    img.style.transition = 'none';
+    img.style.transform = `translate(-50%, -50%) scale(${currentScale})`;
+    img.style.left = currentX + 'px';
+    img.style.top = currentY + 'px';
+  }, speed);
+}
+
+function checkIfOutOfBounds() {
+  if (!state.objectVisible) return;
+  const w = window.innerWidth;
+  const h = window.innerHeight;
+  if (currentX > w) hideObject('right');
+  else if (currentX < 0) hideObject('left');
+  else if (currentY > h) hideObject('down');
+  else if (currentY < 0) hideObject('up');
 }
 
 // ── DÉCLENCHEURS PERFORMANCE ──
@@ -694,7 +726,10 @@ function setupDragAndZoom() {
     e.stopPropagation();
   }, { passive: true });
 
-  img.addEventListener('touchend', () => { dragging = false; });
+  img.addEventListener('touchend', () => {
+    dragging = false;
+    checkIfOutOfBounds();
+  });
 
   // Mouse (pour test PC)
   img.addEventListener('mousedown', e => {
@@ -714,7 +749,10 @@ function setupDragAndZoom() {
     applyTransform();
   });
 
-  document.addEventListener('mouseup', () => { dragging = false; });
+  document.addEventListener('mouseup', () => {
+    dragging = false;
+    checkIfOutOfBounds();
+  });
 }
 
 function applyTransform() {
