@@ -676,8 +676,12 @@ function setupPerformanceTriggers() {
     } else {
       window.addEventListener('devicemotion', onShake);
     }
-  } else if (state.trigger.startsWith('tap-')) {
-    document.getElementById(state.trigger).addEventListener('click', showObject);
+ } else if (state.trigger.startsWith('tap-')) {
+    const zone = document.getElementById(state.trigger);
+    if (zone) {
+      zone.style.display = 'block';
+      zone.addEventListener('pointerdown', showObject);
+    }
   }
 }
 
