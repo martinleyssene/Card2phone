@@ -645,18 +645,22 @@ function hideObject(direction) {
   img.style.transform = `translate(calc(-50% + ${tx}px), calc(-50% + ${ty}px)) scale(${currentScale})`;
 
  setTimeout(() => {
+    display.style.transition = 'none';
+    display.style.opacity = '0';
     display.classList.remove('visible');
     img.style.transition = 'none';
     img.style.visibility = 'hidden';
+    currentX = window.innerWidth / 2;
+    currentY = window.innerHeight / 2;
+    img.style.left = currentX + 'px';
+    img.style.top = currentY + 'px';
+    img.style.transform = `translate(-50%, -50%) scale(1)`;
+    currentScale = 1;
     setTimeout(() => {
-      currentX = window.innerWidth / 2;
-      currentY = window.innerHeight / 2;
-      img.style.left = currentX + 'px';
-      img.style.top = currentY + 'px';
-      img.style.transform = `translate(-50%, -50%) scale(1)`;
-      currentScale = 1;
       img.style.visibility = 'visible';
-    }, 200);
+      display.style.opacity = '';
+      display.style.transition = '';
+    }, 100);
   }, speed);
 }
 
