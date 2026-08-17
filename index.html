@@ -646,15 +646,15 @@ function hideObject(direction) {
 
  setTimeout(() => {
     display.classList.remove('visible');
-    setTimeout(() => {
-      img.style.transition = 'none';
-      currentX = window.innerWidth / 2;
-      currentY = window.innerHeight / 2;
-      img.style.left = currentX + 'px';
-      img.style.top = currentY + 'px';
-      img.style.transform = `translate(-50%, -50%) scale(1)`;
-      currentScale = 1;
-    }, 50);
+    img.style.transition = 'none';
+    img.style.opacity = '0';
+    currentX = window.innerWidth / 2;
+    currentY = window.innerHeight / 2;
+    img.style.left = currentX + 'px';
+    img.style.top = currentY + 'px';
+    img.style.transform = `translate(-50%, -50%) scale(1)`;
+    currentScale = 1;
+    setTimeout(() => { img.style.opacity = '1'; }, 100);
   }, speed);
 }
 
