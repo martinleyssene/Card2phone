@@ -498,7 +498,8 @@ function updatePreview() {
   if (state.selectedObject) {
     img.onload = null;
     img.src = state.selectedObject.src;
-    img.style.cssText = `display:block; width:${document.getElementById('size-slider').value}%; object-fit:contain;`;
+    const size = document.getElementById('size-slider').value;
+    img.style.cssText = `display:block; width:${size}%; max-width:100%; max-height:160px; object-fit:contain;`;
     placeholder.style.display = 'none';
   } else {
     img.style.display = 'none';
