@@ -494,9 +494,9 @@ function updatePreview() {
   const img = document.getElementById('preview-img');
   const placeholder = document.getElementById('preview-placeholder');
   if (state.selectedObject) {
+    img.onload = null;
     img.src = state.selectedObject.src;
-    img.style.display = 'block';
-    img.style.width = document.getElementById('size-slider').value + '%';
+    img.style.cssText = `display:block; width:${document.getElementById('size-slider').value}%; max-height:160px; object-fit:contain;`;
     placeholder.style.display = 'none';
   } else {
     img.style.display = 'none';
