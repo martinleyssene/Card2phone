@@ -56,20 +56,6 @@
     .object-item img { width: 85%; height: 85%; object-fit: contain; }
     .object-item.add-btn { border: 2px dashed #333; font-size: 28px; color: #444; }
 
-    /* Aperçu taille */
-    #preview-container {
-      background: #111;
-      border-radius: 14px;
-      height: 180px;
-      width: 100%;
-      display: flex;
-      align-items: center;
-      justify-content: center;
-      margin-bottom: 16px;
-      overflow: hidden;
-      position: relative;
-      flex-shrink: 0;
-    }
 
     #preview-img {
       object-fit: contain;
@@ -270,18 +256,14 @@
     <div class="object-item add-btn" onclick="importObject()">+</div>
   </div>
 
-  <p class="section-title">Aperçu</p>
-  <div id="preview-container" style="background:#111;border-radius:14px;height:180px;display:flex;align-items:center;justify-content:center;margin-bottom:16px;overflow:hidden;border:2px solid red;">
-    <img id="preview-img" src="" style="display:none;max-height:160px;object-fit:contain;">
-    <span id="preview-placeholder" style="color:#444;font-size:13px;">Sélectionne un objet</span>
-  </div>
 
   <p class="section-title">Réglages</p>
   <div class="settings-block">
     <div class="setting-row">
       <span class="setting-label">Taille</span>
-      <input type="range" id="size-slider" min="10" max="95" value="60" oninput="updateSize()">
       <span class="setting-value" id="size-val">60%</span>
+      <button onclick="openSizePreview()" style="background:#222;color:#fff;border:none;padding:6px 12px;border-radius:8px;font-size:13px">Régler</button>
+      <input type="range" id="size-slider" min="10" max="100" value="60" style="display:none" oninput="updateSize()">
     </div>
     <div class="setting-row">
       <span class="setting-label">Vitesse d'apparition</span>
@@ -370,6 +352,16 @@
   <div class="tap-zone" id="tap-center"></div>
   <div id="object-display">
     <img id="object-img" src="" alt="">
+  </div>
+</div>
+
+<!-- PAGE APERÇU TAILLE -->
+<div id="size-preview-page" style="display:none;position:fixed;inset:0;background:#000;z-index:200;flex-direction:column;align-items:center;justify-content:center;">
+  <button onclick="closeSizePreview()" style="position:absolute;top:20px;right:20px;background:none;border:none;color:#fff;font-size:32px;cursor:pointer;">✕</button>
+  <img id="size-preview-img" src="" style="object-fit:contain;max-height:80vh;">
+  <div style="position:absolute;bottom:40px;left:20px;right:20px;">
+    <input type="range" id="size-slider-preview" min="10" max="100" value="60" style="-webkit-appearance:none;appearance:none;width:100%;height:4px;background:#333;border-radius:2px;outline:none;" oninput="updateSizeFromPreview(this.value)">
+    <p style="text-align:center;color:#fff;margin-top:10px;font-size:16px;" id="size-val-preview">60%</p>
   </div>
 </div>
 
@@ -492,26 +484,35 @@ function selectObject(obj) {
   updatePreview();
 }
 
-function updatePreview() {
-  const img = document.getElementById('preview-img');
-  const placeholder = document.getElementById('preview-placeholder');
-  if (state.selectedObject) {
-    img.onload = null;
-    img.src = state.selectedObject.src;
-    const size = document.getElementById('size-slider').value;
-    img.style.cssText = `display:block; width:${size}%; max-width:100%; max-height:160px; object-fit:contain;`;
-    placeholder.style.display = 'none';
-  } else {
-    img.style.display = 'none';
-    placeholder.style.display = 'block';
-  }
-}
 
 function updateSize() {
   const val = document.getElementById('size-slider').value;
   document.getElementById('size-val').textContent = val + '%';
-  const img = document.getElementById('preview-img');
-  if (img) img.style.width = val + '%';
+  saveToStorage();
+}
+
+function openSizePreview() {
+  if (!state.selectedObject) { alert('Sélectionne un objet d\'abord !'); return; }
+  const page = document.getElementById('size-preview-page');
+  const img = document.getElementById('size-preview-img');
+  const slider = document.getElementById('size-slider-preview');
+  const val = document.getElementById('size-slider').value;
+  img.src = state.selectedObject.src;
+  img.style.width = val + 'vw';
+  slider.value = val;
+  document.getElementById('size-val-preview').textContent = val + '%';
+  page.style.display = 'flex';
+}
+
+function closeSizePreview() {
+  document.getElementById('size-preview-page').style.display = 'none';
+}
+
+function updateSizeFromPreview(val) {
+  document.getElementById('size-preview-img').style.width = val + 'vw';
+  document.getElementById('size-val-preview').textContent = val + '%';
+  document.getElementById('size-slider').value = val;
+  document.getElementById('size-val').textContent = val + '%';
   saveToStorage();
 }
 
