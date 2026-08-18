@@ -66,10 +66,9 @@
       align-items: center;
       justify-content: center;
       margin-bottom: 16px;
-      overflow: visible;
+      overflow: hidden;
       position: relative;
       flex-shrink: 0;
-      padding: 10px;
     }
 
     #preview-img {
@@ -499,7 +498,7 @@ function updatePreview() {
   if (state.selectedObject) {
     img.onload = null;
     img.src = state.selectedObject.src;
-    img.style.cssText = `display:block; width:${document.getElementById('size-slider').value}%; max-height:160px; object-fit:contain;`;
+    img.style.cssText = `display:block; width:${document.getElementById('size-slider').value}%; object-fit:contain;`;
     placeholder.style.display = 'none';
   } else {
     img.style.display = 'none';
