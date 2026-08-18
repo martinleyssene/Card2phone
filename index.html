@@ -58,15 +58,17 @@
 
     /* Aperçu taille */
     #preview-container {
-      background: #ff0000 !important;
+      background: #ff0000;
       border-radius: 14px;
-      height: 180px !important;
-      display: flex !important;
+      min-height: 180px;
+      width: 100%;
+      display: flex;
       align-items: center;
       justify-content: center;
       margin-bottom: 16px;
       overflow: hidden;
       position: relative;
+      flex-shrink: 0;
     }
 
     #preview-img {
