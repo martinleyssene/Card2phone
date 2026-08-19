@@ -403,7 +403,6 @@ let lastShake = 0;
 window.onload = () => {
   loadFromStorage();
   renderObjects();
-  setupTriggerButtons();
   const size = localStorage.getItem('mp_size');
   if (size) {
     document.getElementById('size-slider').value = size;
@@ -420,12 +419,8 @@ window.onload = () => {
     if (found) selectObject(found);
   }
   const trigger = localStorage.getItem('mp_trigger');
-  if (trigger) {
-    state.trigger = trigger;
-    document.querySelectorAll('.trigger-btn').forEach(b => {
-      b.classList.toggle('selected', b.dataset.trigger === trigger);
-    });
-  }
+  if (trigger) state.trigger = trigger;
+  setupTriggerButtons();
 };
 
 // ── STORAGE ──
