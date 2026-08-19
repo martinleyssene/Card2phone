@@ -565,6 +565,7 @@ function toggleSetting(el) {
 // ── DÉCLENCHEURS ──
 function setupTriggerButtons() {
   document.querySelectorAll('.trigger-btn').forEach(btn => {
+    btn.classList.toggle('selected', btn.dataset.trigger === state.trigger);
     btn.onclick = () => {
       document.querySelectorAll('.trigger-btn').forEach(b => b.classList.remove('selected'));
       btn.classList.add('selected');
