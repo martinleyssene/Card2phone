@@ -497,8 +497,11 @@ function openSizePreview() {
   const val = document.getElementById('size-slider').value;
   img.src = state.selectedObject.src;
   const realSize = state.selectedObject.realSize;
-  const actualWidth = realSize ? (val * realSize / 100) : val;
-  img.style.width = actualWidth + 'vmin';
+  const baseWidth = realSize ? realSize : 60;
+  const scale = val / 100;
+  img.style.width = baseWidth + 'vmin';
+  img.style.transform = `scale(${scale})`;
+  img.style.transformOrigin = 'center center';
   slider.value = val;
   document.getElementById('size-val-preview').textContent = val + '%';
   const resetBtn = document.getElementById('reset-size-btn');
@@ -513,8 +516,12 @@ function closeSizePreview() {
 
 function updateSizeFromPreview(val) {
   const realSize = state.selectedObject?.realSize;
-  const actualWidth = realSize ? (val * realSize / 100) : val;
-  document.getElementById('size-preview-img').style.width = actualWidth + 'vmin';
+  const baseWidth = realSize ? realSize : 60;
+  const scale = val / 100;
+  const img = document.getElementById('size-preview-img');
+  img.style.width = baseWidth + 'vmin';
+  img.style.transform = `scale(${scale})`;
+  img.style.transformOrigin = 'center center';
   document.getElementById('size-val-preview').textContent = val + '%';
   document.getElementById('size-slider').value = val;
   document.getElementById('size-val').textContent = val + '%';
