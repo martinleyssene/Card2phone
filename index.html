@@ -359,12 +359,16 @@
 
 <!-- PAGE APERÇU TAILLE -->
 <div id="size-preview-page" style="display:none;position:fixed;inset:0;background:#000;z-index:200;flex-direction:column;align-items:center;justify-content:center;">
-  <button onclick="closeSizePreview()" style="position:absolute;top:20px;right:20px;background:none;border:none;color:#fff;font-size:32px;cursor:pointer;">✕</button>
+  <button onclick="closeSizePreview()" style="position:fixed;top:20px;right:20px;background:rgba(0,0,0,0.6);border:none;color:#fff;font-size:32px;cursor:pointer;z-index:999;width:50px;height:50px;border-radius:25px;display:flex;align-items:center;justify-content:center;">✕</button>
   <img id="size-preview-img" src="" style="object-fit:contain;max-height:80vh;">
   <div style="position:absolute;bottom:40px;left:20px;right:20px;">
     <input type="range" id="size-slider-preview" min="10" max="250" value="100" style="-webkit-appearance:none;appearance:none;width:100%;height:4px;background:#333;border-radius:2px;outline:none;" oninput="updateSizeFromPreview(this.value)">
 <button id="reset-size-btn" onclick="resetSize()" style="margin-top:16px;background:#222;color:#fff;border:none;padding:10px 24px;border-radius:10px;font-size:15px;">Réinitialiser la taille</button>
-    <p style="text-align:center;color:#fff;margin-top:10px;font-size:16px;" id="size-val-preview">60%</p>
+    <div style="display:flex;align-items:center;justify-content:center;gap:8px;margin-top:10px;">
+  <input type="number" id="size-input-preview" min="10" max="250" value="100" style="width:70px;background:#222;color:#fff;border:1px solid #444;border-radius:8px;padding:6px;font-size:16px;text-align:center;" oninput="updateSizeFromInput(this.value)">
+  <span style="color:#fff;font-size:16px;">%</span>
+</div>
+<p style="display:none" id="size-val-preview">100%</p>
   </div>
 </div>
 
@@ -504,6 +508,7 @@ function openSizePreview() {
   img.style.transformOrigin = 'center center';
   slider.value = val;
   document.getElementById('size-val-preview').textContent = val + '%';
+  document.getElementById('size-input-preview').value = val;
   const resetBtn = document.getElementById('reset-size-btn');
   resetBtn.style.opacity = realSize ? '1' : '0.3';
   resetBtn.style.pointerEvents = realSize ? 'all' : 'none';
@@ -534,6 +539,12 @@ function resetSize() {
   const slider = document.getElementById('size-slider-preview');
   slider.value = 100;
   updateSizeFromPreview(100);
+}
+
+function updateSizeFromInput(val) {
+  val = Math.min(Math.max(parseInt(val) || 10, 10), 250);
+  document.getElementById('size-slider-preview').value = val;
+  updateSizeFromPreview(val);
 }
 
 function importObject() {
