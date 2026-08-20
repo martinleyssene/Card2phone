@@ -224,6 +224,8 @@
       -webkit-user-select: none;
       cursor: grab;
       -webkit-touch-callout: none;
+      max-width: none;
+      max-height: none;
     }
 
     .tap-zone {
@@ -496,7 +498,7 @@ function openSizePreview() {
   img.src = state.selectedObject.src;
   const realSize = state.selectedObject.realSize;
   const actualWidth = realSize ? (val * realSize / 100) : val;
-  img.style.width = actualWidth + 'vw';
+  img.style.width = actualWidth + 'vmin';
   slider.value = val;
   document.getElementById('size-val-preview').textContent = val + '%';
   const resetBtn = document.getElementById('reset-size-btn');
@@ -512,7 +514,7 @@ function closeSizePreview() {
 function updateSizeFromPreview(val) {
   const realSize = state.selectedObject?.realSize;
   const actualWidth = realSize ? (val * realSize / 100) : val;
-  document.getElementById('size-preview-img').style.width = actualWidth + 'vw';
+  document.getElementById('size-preview-img').style.width = actualWidth + 'vmin';
   document.getElementById('size-val-preview').textContent = val + '%';
   document.getElementById('size-slider').value = val;
   document.getElementById('size-val').textContent = val + '%';
