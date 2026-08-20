@@ -528,6 +528,7 @@ function updateSizeFromPreview(val) {
   img.style.transform = `scale(${scale})`;
   img.style.transformOrigin = 'center center';
   document.getElementById('size-val-preview').textContent = val + '%';
+  document.getElementById('size-input-preview').value = val;
   document.getElementById('size-slider').value = val;
   document.getElementById('size-val').textContent = val + '%';
   saveToStorage();
