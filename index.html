@@ -541,6 +541,7 @@ function resetSize() {
   if (!state.selectedObject) return;
   const defaultObj = state.objects.find(o => o.id === state.selectedObject.id);
   const realSize = defaultObj?.realSize;
+  alert('id: ' + state.selectedObject.id + ' | realSize: ' + realSize);
   if (!realSize) return;
   const slider = document.getElementById('size-slider-preview');
   slider.value = 100;
