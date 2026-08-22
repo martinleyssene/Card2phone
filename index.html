@@ -481,7 +481,8 @@ function renderObjects() {
 }
 
 function selectObject(obj) {
-  state.selectedObject = obj;
+  const freshObj = state.objects.find(o => o.id === obj.id);
+  state.selectedObject = freshObj || obj;
   renderObjects();
   saveToStorage();
 }
