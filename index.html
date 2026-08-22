@@ -523,7 +523,8 @@ function closeSizePreview() {
 }
 
 function updateSizeFromPreview(val) {
-  const realSize = state.selectedObject?.realSize;
+  const freshObj = state.objects.find(o => o.id === state.selectedObject?.id);
+  const realSize = freshObj?.realSize ?? state.selectedObject?.realSize;
   const baseWidth = realSize ? realSize : 60;
   const scale = val / 100;
   const img = document.getElementById('size-preview-img');
