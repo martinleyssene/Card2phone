@@ -500,7 +500,9 @@ function openSizePreview() {
   const slider = document.getElementById('size-slider-preview');
   const val = document.getElementById('size-slider').value;
   img.src = state.selectedObject.src;
-  const realSize = state.selectedObject.realSize;
+  const freshObj = state.objects.find(o => o.id === state.selectedObject.id);
+  const realSize = freshObj ? freshObj.realSize : state.selectedObject.realSize;
+  state.selectedObject.realSize = realSize;
   const baseWidth = realSize ? realSize : 60;
   const scale = val / 100;
   img.style.width = baseWidth + 'vmin';
