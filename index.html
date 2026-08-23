@@ -506,8 +506,8 @@ function openSizePreview() {
   state.selectedObject.realSize = realSize;
   const baseWidth = realSize ? realSize : 60;
   const scale = val / 100;
-  img.style.width = baseWidth + 'vmin';
-  img.style.transform = `scale(${scale})`;
+  img.style.width = '60vmin';
+  img.style.transform = `scale(${(scale * baseWidth) / 100})`;
   img.style.transformOrigin = 'center center';
   slider.value = val;
   document.getElementById('size-val-preview').textContent = val + '%';
