@@ -293,6 +293,10 @@
       <span class="setting-label">Mode répétition</span>
       <div class="toggle" id="toggle-repeat" onclick="toggleSetting(this)"></div>
     </div>
+    <div class="setting-row">
+      <span class="setting-label">Verrouiller le zoom</span>
+      <div class="toggle" id="toggle-zoomLock" onclick="toggleSetting(this)"></div>
+    </div>
   </div>
 
   <p class="section-title">Déclencheur</p>
@@ -396,7 +400,7 @@ const state = {
   objectVisible: false,
   settings: {
     parallax: true, vibration: true, sound: false,
-    wakelock: true, repeat: false
+    wakelock: true, repeat: false, zoomLock: false
   }
 };
 
@@ -794,7 +798,7 @@ function setupDragAndZoom() {
       currentX = imgStartX + (e.touches[0].clientX - dragStartX);
       currentY = imgStartY + (e.touches[0].clientY - dragStartY);
       applyTransform();
-    } else if (e.touches.length === 2) {
+    } else if (e.touches.length === 2 && !state.settings.zoomLock) {
       const dist = Math.hypot(
         e.touches[0].clientX - e.touches[1].clientX,
         e.touches[0].clientY - e.touches[1].clientY
