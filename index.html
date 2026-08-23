@@ -529,8 +529,8 @@ function updateSizeFromPreview(val) {
   const baseWidth = realSize ? realSize : 60;
   const scale = val / 100;
   const img = document.getElementById('size-preview-img');
-  img.style.width = baseWidth + 'vmin';
-  img.style.transform = `scale(${scale})`;
+  img.style.width = '60vmin';
+  img.style.transform = `scale(${(scale * baseWidth) / 100})`;
   img.style.transformOrigin = 'center center';
   document.getElementById('size-val-preview').textContent = val + '%';
   document.getElementById('size-input-preview').value = val;
