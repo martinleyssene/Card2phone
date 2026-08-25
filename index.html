@@ -351,6 +351,9 @@
 <!-- PERFORMANCE -->
 <div id="performance-page">
   <div id="wallpaper"></div>
+<div id="sensor-permission-btn" style="display:none;position:fixed;inset:0;z-index:300;align-items:center;justify-content:center;background:rgba(0,0,0,0.7);">
+  <button onclick="requestSensorPermissions()" style="background:#fff;color:#000;border:none;padding:20px 40px;border-radius:16px;font-size:18px;font-weight:600;">Autoriser les capteurs</button>
+</div>
   <div class="tap-zone" id="tap-tl"></div>
   <div class="tap-zone" id="tap-tr"></div>
   <div class="tap-zone" id="tap-bl"></div>
@@ -658,13 +661,51 @@ async function launch() {
     try { wakeLock = await navigator.wakeLock.request('screen'); } catch(e) {}
   }
 
-  setupPerformanceTriggers();
   setupDragAndZoom();
   setupWallpaperSwipe();
   setupThreeFingerSwipe();
-  if (state.settings.parallax) setupParallax();
+
+  const needsPermission = typeof DeviceMotionEvent?.requestPermission === 'function' ||
+    typeof DeviceOrientationEvent?.requestPermission === 'function';
+
+  if (needsPermission && (state.trigger === 'shake' || state.settings.parallax)) {
+    document.getElementById('sensor-permission-btn').style.display = 'flex';
+  } else {
+    setupPerformanceTriggers();
+    if (state.settings.parallax) setupParallax();
+  }
 
   document.addEventListener('visibilitychange', onVisibilityChange);
+}
+
+function requestSensorPermissions() {
+  const btn = document.getElementById('sensor-permission-btn');
+  btn.style.display = 'none';
+
+  const motionPermission = typeof DeviceMotionEvent?.requestPermission === 'function'
+    ? DeviceMotionEvent.requestPermission()
+    : Promise.resolve('granted');
+
+  const orientationPermission = typeof DeviceOrientationEvent?.requestPermission === 'function'
+    ? DeviceOrientationEvent.requestPermission()
+    : Promise.resolve('granted');
+
+  Promise.all([motionPermission, orientationPermission]).then(([motion, orientation]) => {
+    if (motion === 'granted' && state.trigger === 'shake') {
+      window.addEventListener('devicemotion', onShake);
+    }
+    if (orientation === 'granted' && state.settings.parallax) {
+      window.addEventListener('deviceorientation', e => {
+        if (!state.objectVisible) return;
+        const x = (e.gamma || 0) / 30 * 15;
+        const y = ((e.beta || 0) - 45) / 30 * 10;
+        const img = document.getElementById('object-img');
+        img.style.left = (currentX + x) + 'px';
+        img.style.top = (currentY + y) + 'px';
+        img.style.transform = `translate(-50%, -50%) scale(${currentScale})`;
+      });
+    }
+  });
 }
 
 
@@ -847,25 +888,15 @@ function applyTransform() {
 
 // ── PARALLAXE ──
 function setupParallax() {
-  const apply = () => {
-    window.addEventListener('deviceorientation', e => {
-      if (!state.objectVisible) return;
-      const x = (e.gamma || 0) / 30 * 15;
-      const y = ((e.beta || 0) - 45) / 30 * 10;
-      const img = document.getElementById('object-img');
-      img.style.left = (currentX + x) + 'px';
-      img.style.top = (currentY + y) + 'px';
-      img.style.transform = `translate(-50%, -50%) scale(${currentScale})`;
-    });
-  };
-
-  if (typeof DeviceOrientationEvent?.requestPermission === 'function') {
-    DeviceOrientationEvent.requestPermission().then(r => {
-      if (r === 'granted') apply();
-    });
-  } else {
-    apply();
-  }
+  window.addEventListener('deviceorientation', e => {
+    if (!state.objectVisible) return;
+    const x = (e.gamma || 0) / 30 * 15;
+    const y = ((e.beta || 0) - 45) / 30 * 10;
+    const img = document.getElementById('object-img');
+    img.style.left = (currentX + x) + 'px';
+    img.style.top = (currentY + y) + 'px';
+    img.style.transform = `translate(-50%, -50%) scale(${currentScale})`;
+  });
 }
 
 // ── SWIPE FOND D'ÉCRAN (1 doigt) ──
