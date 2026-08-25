@@ -697,8 +697,8 @@ function requestSensorPermissions() {
     if (orientation === 'granted' && state.settings.parallax) {
       window.addEventListener('deviceorientation', e => {
         if (!state.objectVisible) return;
-        const x = (e.gamma || 0) / 30 * 15;
-        const y = ((e.beta || 0) - 45) / 30 * 10;
+        const x = (e.gamma || 0) / 30 * 40;
+        const y = ((e.beta || 0) - 45) / 30 * 30;
         const img = document.getElementById('object-img');
         img.style.left = (currentX + x) + 'px';
         img.style.top = (currentY + y) + 'px';
@@ -800,7 +800,7 @@ function onShake(e) {
   if (!acc) return;
   const total = Math.abs(acc.x) + Math.abs(acc.y) + Math.abs(acc.z);
   const now = Date.now();
-  if (total > 15 && now - lastShake > 1000) {
+  if (total > 35 && now - lastShake > 1500) {
     lastShake = now;
     showObject();
   }
