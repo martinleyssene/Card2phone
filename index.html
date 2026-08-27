@@ -401,6 +401,7 @@ const state = {
   wallpapers: [null, null, null],
   currentWallpaper: 0,
   objectVisible: false,
+  sensorPermission: false,
   settings: {
     parallax: true, vibration: true, sound: false,
     wakelock: true, repeat: false, zoomLock: false
@@ -452,6 +453,8 @@ function loadFromStorage() {
     if (settings) state.settings = { ...state.settings, ...JSON.parse(settings) };
     const trigger = localStorage.getItem('mp_trigger');
     if (trigger) state.trigger = trigger;
+    const sensorPerm = localStorage.getItem('mp_sensor_permission');
+    if (sensorPerm === 'granted') state.sensorPermission = true;
   } catch(e) {}
   updateWallpaperNames();
 }
@@ -463,6 +466,8 @@ function saveToStorage() {
     localStorage.setItem('mp_wallpapers', JSON.stringify(state.wallpapers));
     localStorage.setItem('mp_settings', JSON.stringify(state.settings));
     localStorage.setItem('mp_trigger', state.trigger);
+    localStorage.setItem('mp_sensor_permission', state.sensorPermission ? 'granted' : 'denied');
+    localStorage.setItem('mp_sensor_permission', state.sensorPermission ? 'granted' : 'denied');
     localStorage.setItem('mp_selected', state.selectedObject ? state.selectedObject.id : null);
     localStorage.setItem('mp_size', document.getElementById('size-slider').value);
     localStorage.setItem('mp_speed', document.getElementById('speed-slider').value);
@@ -609,6 +614,9 @@ function toggleSetting(el) {
   el.classList.toggle('on');
   const key = el.id.replace('toggle-', '');
   state.settings[key] = el.classList.contains('on');
+  if ((key === 'parallax') && state.settings[key] && !state.sensorPermission) {
+    requestSensorPermissions();
+  }
   saveToStorage();
 }
 
@@ -620,6 +628,9 @@ function setupTriggerButtons() {
       document.querySelectorAll('.trigger-btn').forEach(b => b.classList.remove('selected'));
       btn.classList.add('selected');
       state.trigger = btn.dataset.trigger;
+      if (state.trigger === 'shake' && !state.sensorPermission) {
+        requestSensorPermissions();
+      }
       saveToStorage();
     };
   });
@@ -680,7 +691,7 @@ async function launch() {
 
 function requestSensorPermissions() {
   const btn = document.getElementById('sensor-permission-btn');
-  btn.style.display = 'none';
+  if (btn) btn.style.display = 'none';
 
   const motionPermission = typeof DeviceMotionEvent?.requestPermission === 'function'
     ? DeviceMotionEvent.requestPermission()
@@ -691,17 +702,27 @@ function requestSensorPermissions() {
     : Promise.resolve('granted');
 
   Promise.all([motionPermission, orientationPermission]).then(([motion, orientation]) => {
+    if (motion === 'granted' || orientation === 'granted') {
+      state.sensorPermission = true;
+      saveToStorage();
+    }
     if (motion === 'granted' && state.trigger === 'shake') {
       window.addEventListener('devicemotion', onShake);
     }
     if (orientation === 'granted' && state.settings.parallax) {
       window.addEventListener('deviceorientation', e => {
         if (!state.objectVisible) return;
-        const x = (e.gamma || 0) / 30 * 40;
-        const y = ((e.beta || 0) - 45) / 30 * 30;
         const img = document.getElementById('object-img');
-        img.style.left = (currentX + x) + 'px';
-        img.style.top = (currentY + y) + 'px';
+        const rect = img.getBoundingClientRect();
+        const halfW = rect.width / 2;
+        const halfH = rect.height / 2;
+        const rawX = currentX + (e.gamma || 0) / 30 * 40;
+        const rawY = currentY + ((e.beta || 0) - 45) / 30 * 30;
+        const clampedX = Math.min(Math.max(rawX, halfW), window.innerWidth - halfW);
+        const clampedY = Math.min(Math.max(rawY, halfH), window.innerHeight - halfH);
+        img.style.transition = 'left 0.1s ease-out, top 0.1s ease-out';
+        img.style.left = clampedX + 'px';
+        img.style.top = clampedY + 'px';
         img.style.transform = `translate(-50%, -50%) scale(${currentScale})`;
       });
     }
@@ -890,11 +911,17 @@ function applyTransform() {
 function setupParallax() {
   window.addEventListener('deviceorientation', e => {
     if (!state.objectVisible) return;
-    const x = (e.gamma || 0) / 30 * 15;
-    const y = ((e.beta || 0) - 45) / 30 * 10;
     const img = document.getElementById('object-img');
-    img.style.left = (currentX + x) + 'px';
-    img.style.top = (currentY + y) + 'px';
+    const rect = img.getBoundingClientRect();
+    const halfW = rect.width / 2;
+    const halfH = rect.height / 2;
+    const rawX = currentX + (e.gamma || 0) / 30 * 40;
+    const rawY = currentY + ((e.beta || 0) - 45) / 30 * 30;
+    const clampedX = Math.min(Math.max(rawX, halfW), window.innerWidth - halfW);
+    const clampedY = Math.min(Math.max(rawY, halfH), window.innerHeight - halfH);
+    img.style.transition = 'left 0.1s ease-out, top 0.1s ease-out';
+    img.style.left = clampedX + 'px';
+    img.style.top = clampedY + 'px';
     img.style.transform = `translate(-50%, -50%) scale(${currentScale})`;
   });
 }
