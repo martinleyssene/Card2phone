@@ -676,14 +676,18 @@ async function launch() {
   setupWallpaperSwipe();
   setupThreeFingerSwipe();
 
-  const needsPermission = typeof DeviceMotionEvent?.requestPermission === 'function' ||
-    typeof DeviceOrientationEvent?.requestPermission === 'function';
-
-  if (needsPermission && (state.trigger === 'shake' || state.settings.parallax)) {
-    document.getElementById('sensor-permission-btn').style.display = 'flex';
-  } else {
+  if (state.sensorPermission) {
     setupPerformanceTriggers();
     if (state.settings.parallax) setupParallax();
+  } else {
+    const needsPermission = typeof DeviceMotionEvent?.requestPermission === 'function' ||
+      typeof DeviceOrientationEvent?.requestPermission === 'function';
+    if (needsPermission && (state.trigger === 'shake' || state.settings.parallax)) {
+      document.getElementById('sensor-permission-btn').style.display = 'flex';
+    } else {
+      setupPerformanceTriggers();
+      if (state.settings.parallax) setupParallax();
+    }
   }
 
   document.addEventListener('visibilitychange', onVisibilityChange);
@@ -711,7 +715,7 @@ function requestSensorPermissions() {
     }
     if (orientation === 'granted' && state.settings.parallax) {
       window.addEventListener('deviceorientation', e => {
-        if (!state.objectVisible) return;
+        if (!state.objectVisible || isDragging) return;
         const img = document.getElementById('object-img');
         const rect = img.getBoundingClientRect();
         const halfW = rect.width / 2;
@@ -839,6 +843,7 @@ function setupDragAndZoom() {
   img.addEventListener('touchstart', e => {
     if (e.touches.length === 1) {
       dragging = true;
+      isDragging = true;
       dragStartX = e.touches[0].clientX;
       dragStartY = e.touches[0].clientY;
       imgStartX = currentX;
@@ -873,6 +878,7 @@ function setupDragAndZoom() {
 
   img.addEventListener('touchend', () => {
     dragging = false;
+    isDragging = false;
     checkIfOutOfBounds();
   });
 
@@ -910,7 +916,7 @@ function applyTransform() {
 // ── PARALLAXE ──
 function setupParallax() {
   window.addEventListener('deviceorientation', e => {
-    if (!state.objectVisible) return;
+    if (!state.objectVisible || isDragging) return;
     const img = document.getElementById('object-img');
     const rect = img.getBoundingClientRect();
     const halfW = rect.width / 2;
