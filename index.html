@@ -804,14 +804,8 @@ function checkIfOutOfBounds() {
 // ── DÉCLENCHEURS PERFORMANCE ──
 function setupPerformanceTriggers() {
   if (state.trigger === 'shake') {
-    if (typeof DeviceMotionEvent?.requestPermission === 'function') {
-      DeviceMotionEvent.requestPermission().then(r => {
-        if (r === 'granted') window.addEventListener('devicemotion', onShake);
-      });
-    } else {
-      window.addEventListener('devicemotion', onShake);
-    }
- } else if (state.trigger.startsWith('tap-')) {
+    window.addEventListener('devicemotion', onShake);
+  } else if (state.trigger.startsWith('tap-')) {
     const zone = document.getElementById(state.trigger);
     if (zone) {
       zone.style.display = 'block';
