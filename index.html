@@ -620,6 +620,21 @@ function toggleSetting(el) {
   saveToStorage();
 }
 
+function toggleSensors(el) {
+  if (el.classList.contains('on')) {
+    el.classList.remove('on');
+    state.sensorPermission = false;
+    saveToStorage();
+    return;
+  }
+  requestSensorPermissions().then(() => {
+    if (state.sensorPermission) {
+      el.classList.add('on');
+      saveToStorage();
+    }
+  });
+}
+
 // ── DÉCLENCHEURS ──
 function setupTriggerButtons() {
   document.querySelectorAll('.trigger-btn').forEach(btn => {
@@ -679,24 +694,12 @@ async function launch() {
   if (state.sensorPermission) {
     setupPerformanceTriggers();
     if (state.settings.parallax) setupParallax();
-  } else {
-    const needsPermission = typeof DeviceMotionEvent?.requestPermission === 'function' ||
-      typeof DeviceOrientationEvent?.requestPermission === 'function';
-    if (needsPermission && (state.trigger === 'shake' || state.settings.parallax)) {
-      document.getElementById('sensor-permission-btn').style.display = 'flex';
-    } else {
-      setupPerformanceTriggers();
-      if (state.settings.parallax) setupParallax();
-    }
   }
 
   document.addEventListener('visibilitychange', onVisibilityChange);
 }
 
 function requestSensorPermissions() {
-  const btn = document.getElementById('sensor-permission-btn');
-  if (btn) btn.style.display = 'none';
-
   const motionPermission = typeof DeviceMotionEvent?.requestPermission === 'function'
     ? DeviceMotionEvent.requestPermission()
     : Promise.resolve('granted');
@@ -705,30 +708,10 @@ function requestSensorPermissions() {
     ? DeviceOrientationEvent.requestPermission()
     : Promise.resolve('granted');
 
-  Promise.all([motionPermission, orientationPermission]).then(([motion, orientation]) => {
+  return Promise.all([motionPermission, orientationPermission]).then(([motion, orientation]) => {
     if (motion === 'granted' || orientation === 'granted') {
       state.sensorPermission = true;
       saveToStorage();
-    }
-    if (motion === 'granted' && state.trigger === 'shake') {
-      window.addEventListener('devicemotion', onShake);
-    }
-    if (orientation === 'granted' && state.settings.parallax) {
-      window.addEventListener('deviceorientation', e => {
-        if (!state.objectVisible || isDragging) return;
-        const img = document.getElementById('object-img');
-        const rect = img.getBoundingClientRect();
-        const halfW = rect.width / 2;
-        const halfH = rect.height / 2;
-        const rawX = currentX + (e.gamma || 0) / 30 * 40;
-        const rawY = currentY + ((e.beta || 0) - 45) / 30 * 30;
-        const clampedX = Math.min(Math.max(rawX, halfW), window.innerWidth - halfW);
-        const clampedY = Math.min(Math.max(rawY, halfH), window.innerHeight - halfH);
-        img.style.transition = 'left 0.1s ease-out, top 0.1s ease-out';
-        img.style.left = clampedX + 'px';
-        img.style.top = clampedY + 'px';
-        img.style.transform = `translate(-50%, -50%) scale(${currentScale})`;
-      });
     }
   });
 }
