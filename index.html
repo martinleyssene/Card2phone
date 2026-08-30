@@ -902,6 +902,7 @@ function setupDragAndZoom() {
 
 function applyTransform() {
   const img = document.getElementById('object-img');
+  img.style.transition = 'none';
   img.style.left = currentX + 'px';
   img.style.top = currentY + 'px';
   img.style.transform = `translate(-50%, -50%) scale(${currentScale})`;
@@ -909,17 +910,21 @@ function applyTransform() {
 
 // ── PARALLAXE ──
 function setupParallax() {
+  let parallaxX = 0;
+  let parallaxY = 0;
   window.addEventListener('deviceorientation', e => {
     if (!state.objectVisible || isDragging) return;
+    parallaxX = (e.gamma || 0) / 30 * 40;
+    parallaxY = ((e.beta || 0) - 45) / 30 * 30;
     const img = document.getElementById('object-img');
     const rect = img.getBoundingClientRect();
     const halfW = rect.width / 2;
     const halfH = rect.height / 2;
-    const rawX = currentX + (e.gamma || 0) / 30 * 40;
-    const rawY = currentY + ((e.beta || 0) - 45) / 30 * 30;
+    const rawX = currentX + parallaxX;
+    const rawY = currentY + parallaxY;
     const clampedX = Math.min(Math.max(rawX, halfW), window.innerWidth - halfW);
     const clampedY = Math.min(Math.max(rawY, halfH), window.innerHeight - halfH);
-    img.style.transition = 'left 0.1s ease-out, top 0.1s ease-out';
+    img.style.transition = 'left 0.15s ease-out, top 0.15s ease-out';
     img.style.left = clampedX + 'px';
     img.style.top = clampedY + 'px';
     img.style.transform = `translate(-50%, -50%) scale(${currentScale})`;
