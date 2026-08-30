@@ -692,7 +692,8 @@ async function launch() {
   setupWallpaperSwipe();
   setupThreeFingerSwipe();
 
-  if (state.sensorPermission) {
+  alert('sensorPermission: ' + state.sensorPermission + ' | parallax: ' + state.settings.parallax);
+if (state.sensorPermission) {
     setupPerformanceTriggers();
     if (state.settings.parallax) setupParallax();
   }
