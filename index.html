@@ -278,6 +278,10 @@
       <div class="toggle on" id="toggle-parallax" onclick="toggleSetting(this)"></div>
     </div>
     <div class="setting-row">
+      <span class="setting-label">Capteurs (shake/parallaxe)</span>
+      <div class="toggle" id="toggle-sensors" onclick="toggleSensors(this)"></div>
+    </div>
+    <div class="setting-row">
       <span class="setting-label">Vibration</span>
       <div class="toggle on" id="toggle-vibration" onclick="toggleSetting(this)"></div>
     </div>
@@ -351,9 +355,6 @@
 <!-- PERFORMANCE -->
 <div id="performance-page">
   <div id="wallpaper"></div>
-<div id="sensor-permission-btn" style="display:none;position:fixed;inset:0;z-index:300;align-items:center;justify-content:center;background:rgba(0,0,0,0.7);">
-  <button onclick="requestSensorPermissions()" style="background:#fff;color:#000;border:none;padding:20px 40px;border-radius:16px;font-size:18px;font-weight:600;">Autoriser les capteurs</button>
-</div>
   <div class="tap-zone" id="tap-tl"></div>
   <div class="tap-zone" id="tap-tr"></div>
   <div class="tap-zone" id="tap-bl"></div>
