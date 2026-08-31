@@ -674,9 +674,10 @@ async function launch() {
   const freshObj = state.objects.find(o => o.id === state.selectedObject.id);
   const realSize = freshObj?.realSize ?? state.selectedObject?.realSize;
   const baseWidth = realSize ? realSize : 60;
-  const scale = size / 100;
+  // baseScale = le scale qui correspond à 100% du curseur pour cet objet
+  // On stocke le scale de base dans currentScale pour que applyTransform l'utilise
+  currentScale = (parseInt(size) / 100 * baseWidth) / 100;
   img.style.width = '60vmin';
-  img.style.transform = `translate(-50%, -50%) scale(${(scale * baseWidth) / 100})`;
   img.style.maxHeight = 'none';
   img.style.transformOrigin = 'center center';
 
@@ -685,7 +686,7 @@ async function launch() {
   currentY = window.innerHeight / 2;
   img.style.left = currentX + 'px';
   img.style.top = currentY + 'px';
-  currentScale = 1;
+  img.style.transform = `translate(-50%, -50%) scale(${currentScale})`;
 
 
   // Wake lock
@@ -829,8 +830,12 @@ function setupDragAndZoom() {
       isDragging = true;
       dragStartX = e.touches[0].clientX;
       dragStartY = e.touches[0].clientY;
-      imgStartX = currentX;
-      imgStartY = currentY;
+      // On prend la position RÉELLE de l'image au moment du touch (pas currentX/Y qui peut être décalé par le parallaxe)
+      const rect = img.getBoundingClientRect();
+      imgStartX = rect.left + rect.width / 2;
+      imgStartY = rect.top + rect.height / 2;
+      currentX = imgStartX;
+      currentY = imgStartY;
     } else if (e.touches.length === 2) {
       dragging = false;
       pinchStartDist = Math.hypot(
@@ -853,7 +858,8 @@ function setupDragAndZoom() {
         e.touches[0].clientX - e.touches[1].clientX,
         e.touches[0].clientY - e.touches[1].clientY
       );
-      currentScale = Math.min(Math.max(pinchStartScale * (dist / pinchStartDist), 0.3), 4);
+      // Le scale minimum est 0.1 (10% de la taille de base), maximum 4x la taille de base
+      currentScale = Math.min(Math.max(pinchStartScale * (dist / pinchStartDist), 0.1), pinchStartScale * 4);
       applyTransform();
     }
     e.stopPropagation();
@@ -894,39 +900,44 @@ function applyTransform() {
   img.style.transition = 'none';
   img.style.left = currentX + 'px';
   img.style.top = currentY + 'px';
-  // Recalcule la taille réelle pour garder le bon scale
-  const freshObj = state.selectedObject ? state.objects.find(o => o.id === state.selectedObject.id) : null;
-  const realSize = freshObj?.realSize ?? state.selectedObject?.realSize;
-  const baseWidth = realSize ? realSize : 60;
-  const sizeVal = parseInt(document.getElementById('size-slider').value) / 100;
-  const totalScale = (sizeVal * baseWidth) / 100 * currentScale;
-  img.style.transform = `translate(-50%, -50%) scale(${totalScale})`;
+  img.style.transform = `translate(-50%, -50%) scale(${currentScale})`;
 }
 
 // ── PARALLAXE ──
+function getObjectHalfSize() {
+  // Retourne la demi-largeur et demi-hauteur réelles de l'objet affiché (après scale)
+  const img = document.getElementById('object-img');
+  const baseW = img.offsetWidth * currentScale;
+  const baseH = img.offsetHeight * currentScale;
+  return { halfW: baseW / 2, halfH: baseH / 2 };
+}
+
+function isParallaxAllowed() {
+  // Désactive le parallaxe si la carte dépasse déjà les bords de l'écran
+  const { halfW, halfH } = getObjectHalfSize();
+  return halfW < window.innerWidth / 2 && halfH < window.innerHeight / 2;
+}
+
 function setupParallax() {
   let smoothX = 0;
   let smoothY = 0;
   let animFrame = null;
 
   function animate() {
-    if (!state.objectVisible || isDragging) {
-      animFrame = requestAnimationFrame(animate);
-      return;
-    }
-    const img = document.getElementById('object-img');
-    const rect = img.getBoundingClientRect();
-    const halfW = rect.width / 2;
-    const halfH = rect.height / 2;
+    animFrame = requestAnimationFrame(animate);
+    if (!state.objectVisible || isDragging) return;
+    if (!isParallaxAllowed()) return;
+
+    const { halfW, halfH } = getObjectHalfSize();
     const rawX = currentX + smoothX;
     const rawY = currentY + smoothY;
     const clampedX = Math.min(Math.max(rawX, halfW), window.innerWidth - halfW);
     const clampedY = Math.min(Math.max(rawY, halfH), window.innerHeight - halfH);
+    const img = document.getElementById('object-img');
     img.style.transition = 'none';
     img.style.left = clampedX + 'px';
     img.style.top = clampedY + 'px';
     img.style.transform = `translate(-50%, -50%) scale(${currentScale})`;
-    animFrame = requestAnimationFrame(animate);
   }
 
   window.addEventListener('deviceorientation', e => {
