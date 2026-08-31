@@ -414,6 +414,7 @@ let currentScale = 1;
 let currentX = 0;
 let currentY = 0;
 let lastShake = 0;
+let isDragging = false;
 
 // ── INIT ──
 window.onload = () => {
@@ -467,7 +468,6 @@ function saveToStorage() {
     localStorage.setItem('mp_wallpapers', JSON.stringify(state.wallpapers));
     localStorage.setItem('mp_settings', JSON.stringify(state.settings));
     localStorage.setItem('mp_trigger', state.trigger);
-    localStorage.setItem('mp_sensor_permission', state.sensorPermission ? 'granted' : 'denied');
     localStorage.setItem('mp_sensor_permission', state.sensorPermission ? 'granted' : 'denied');
     localStorage.setItem('mp_selected', state.selectedObject ? state.selectedObject.id : null);
     localStorage.setItem('mp_size', document.getElementById('size-slider').value);
@@ -671,8 +671,13 @@ async function launch() {
   const size = document.getElementById('size-slider').value;
   const img = document.getElementById('object-img');
   img.src = state.selectedObject.src;
-  img.style.width = size + 'vw';
-  img.style.maxHeight = '90vh';
+  const freshObj = state.objects.find(o => o.id === state.selectedObject.id);
+  const realSize = freshObj?.realSize ?? state.selectedObject?.realSize;
+  const baseWidth = realSize ? realSize : 60;
+  const scale = size / 100;
+  img.style.width = '60vmin';
+  img.style.transform = `translate(-50%, -50%) scale(${(scale * baseWidth) / 100})`;
+  img.style.maxHeight = 'none';
 
   // Position initiale centrée
   currentX = window.innerWidth / 2;
@@ -692,8 +697,7 @@ async function launch() {
   setupWallpaperSwipe();
   setupThreeFingerSwipe();
 
-  alert('sensorPermission: ' + state.sensorPermission + ' | parallax: ' + state.settings.parallax);
-if (state.sensorPermission) {
+  if (state.sensorPermission) {
     setupPerformanceTriggers();
     if (state.settings.parallax) setupParallax();
   }
