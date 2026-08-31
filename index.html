@@ -678,6 +678,7 @@ async function launch() {
   img.style.width = '60vmin';
   img.style.transform = `translate(-50%, -50%) scale(${(scale * baseWidth) / 100})`;
   img.style.maxHeight = 'none';
+  img.style.transformOrigin = 'center center';
 
   // Position initiale centrée
   currentX = window.innerWidth / 2;
@@ -894,30 +895,50 @@ function applyTransform() {
   img.style.transition = 'none';
   img.style.left = currentX + 'px';
   img.style.top = currentY + 'px';
-  img.style.transform = `translate(-50%, -50%) scale(${currentScale})`;
+  // Recalcule la taille réelle pour garder le bon scale
+  const freshObj = state.selectedObject ? state.objects.find(o => o.id === state.selectedObject.id) : null;
+  const realSize = freshObj?.realSize ?? state.selectedObject?.realSize;
+  const baseWidth = realSize ? realSize : 60;
+  const sizeVal = parseInt(document.getElementById('size-slider').value) / 100;
+  const totalScale = (sizeVal * baseWidth) / 100 * currentScale;
+  img.style.transform = `translate(-50%, -50%) scale(${totalScale})`;
 }
 
 // ── PARALLAXE ──
 function setupParallax() {
-  let parallaxX = 0;
-  let parallaxY = 0;
-  window.addEventListener('deviceorientation', e => {
-    if (!state.objectVisible || isDragging) return;
-    parallaxX = (e.gamma || 0) / 30 * 40;
-    parallaxY = ((e.beta || 0) - 45) / 30 * 30;
+  let smoothX = 0;
+  let smoothY = 0;
+  let animFrame = null;
+
+  function animate() {
+    if (!state.objectVisible || isDragging) {
+      animFrame = requestAnimationFrame(animate);
+      return;
+    }
     const img = document.getElementById('object-img');
     const rect = img.getBoundingClientRect();
     const halfW = rect.width / 2;
     const halfH = rect.height / 2;
-    const rawX = currentX + parallaxX;
-    const rawY = currentY + parallaxY;
+    const rawX = currentX + smoothX;
+    const rawY = currentY + smoothY;
     const clampedX = Math.min(Math.max(rawX, halfW), window.innerWidth - halfW);
     const clampedY = Math.min(Math.max(rawY, halfH), window.innerHeight - halfH);
-    img.style.transition = 'left 0.15s ease-out, top 0.15s ease-out';
+    img.style.transition = 'none';
     img.style.left = clampedX + 'px';
     img.style.top = clampedY + 'px';
     img.style.transform = `translate(-50%, -50%) scale(${currentScale})`;
+    animFrame = requestAnimationFrame(animate);
+  }
+
+  window.addEventListener('deviceorientation', e => {
+    if (!state.objectVisible || isDragging) return;
+    const targetX = (e.gamma || 0) / 30 * 40;
+    const targetY = ((e.beta || 0) - 45) / 30 * 30;
+    smoothX += (targetX - smoothX) * 0.15;
+    smoothY += (targetY - smoothY) * 0.15;
   });
+
+  animFrame = requestAnimationFrame(animate);
 }
 
 // ── SWIPE FOND D'ÉCRAN (1 doigt) ──
