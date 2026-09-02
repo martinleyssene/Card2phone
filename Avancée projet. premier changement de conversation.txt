@@ -1,0 +1,95 @@
+Pour la fluidité des transitions de pages, c'est crucial pour que l'illusion soit convaincante : il faut reproduire le glissement fluide d'iOS avec une animation identique à celle du vrai écran d'accueil.
+
+Voici la liste complète mise à jour :
+
+Bugs / fonctionnalités manquantes :
+
+Shake + parallaxe iOS
+Plusieurs déclencheurs simultanés
+Image un peu basse dans la page aperçu taille
+
+Objets :
+4. Nommer les objets importés
+5. Renommer les objets déjà présents
+6. Retournement de carte au tap
+7. Sélection secrète de la carte au verso
+8. Opacité progressive (décompte ou action spéciale)
+9. Rotation de l'objet avec deux doigts
+10. Définir la taille réelle depuis l'app
+
+Effets visuels :
+11. Animation d'entrée personnalisable (fondu, glissement, zoom, rotation)
+12. Effet de brillance au moment de l'apparition
+13. Ombre portée
+14. Mode "fantôme" — carte légèrement visible en permanence
+
+Interface :
+15. Menu déroulant pour les autres images
+16. Curseur de position verticale du fond d'écran
+17. Transition fluide entre les pages du fond d'écran (style iOS)
+
+Son & Haptique :
+18. Son personnalisable (import de son)
+19. Retour haptique personnalisé (court, long, double)
+
+Performance :
+20. Mode "prêt"
+21. Minuterie discrète
+22. Historique des tours
+
+Sécurité & Comptes :
+23. Compte admin avec mot de passe
+24. Paramètres verrouillés pour les autres utilisateurs
+25. Mode démo
+
+Favoris & Routine :
+26. Système de favoris
+27. Mode routine
+28. Nommer les routines
+29. Barre de recherche des routines
+30. Partager une routine
+
+Organisation :
+31. Catégories d'objets (cartes, pièces, billets...)
+
+Discrétion :
+32. Icône d'app personnalisable
+33. Fausse fermeture
+34. Catégories d'objets cachées selon le profil
+
+Aide :
+35. Guide des fonctionnalités
+36. Moyen de te contacter
+
+Compatibilité :
+37. Test et adaptation Android
+38. Vérification failles de sécurité import d'images
+
+Donc on a en fait 3 fonctionnalités distinctes :
+
+Mode fantôme — carte légèrement visible dès le lancement de la performance, activable discrètement
+Apparition progressive automatique — la carte monte progressivement d'invisible à visible à une vitesse réglable, sans interaction
+Apparition progressive contrôlée — tu contrôles l'opacité avec un geste (gyroscope/inclinaison ou micro pour le souffle), avec possibilité de s'arrêter à n'importe quelle opacité et de reprendre
+
+Les 3 peuvent être combinés ou utilisés séparément. 
+
+Depuis, j'ai un shake fonctionnel
+
+Ce que je veux pour le parallaxe c'est que la carte glisse de manière fluide sur l'écran. ses bords ne doivent pas pouvoir sortir de la limite de l'écran quand elle glisse toute seule mais ils le peuvent quand on maintient la carte pour la sortir à la main.
+
+je suis sur l'application Claude Desktop et je viens d'activer et de configurer le connecteur MCP filesystem. Tu as l'autorisation de l'utiliser. S'il te plait, appelle l'outil list_directory ou view_file pour lire mon dossier de projet actuel. les dossier de mon projet Card2phone sont sur mon bureau
+
+tu dois corriger IMPERATIVEMENT en PRIORITE la taille des objets; puis, fais en sorte que les limites du parallaxe, la zone dans laquelle la carte peut bouger corresponde EXACTEMENT aux bords de l'écran du téléphone. Est-ce que tu peux savoir sur quel téléphone l'app est utilisée ? Si non, tu peux rajouter un bouton qui demande à l'utilisateur quel téléphone il utilise pour ajuster en conséquence la hauteur de positionnement de son fond d'écran et la taille du cadre de l'écran. quand la carte arrive au bord de l'écran, c'est quand les bords de la carte touchent la bordure de l'écran qu'elle bloque; il faut que ce soit bien le contour de la carte. Ces bordures change donc un peu de place en fonction de la taille de la carte; il ne faut pas qu'une carte au grossissement de 20% ait les mêmes bordures qu'une en 100%. Pour ce qui est des cartes dont le zoom fait que les bordures de la carte dépassent du cadre du parallaxe, je pense que pour le moment il vaut mieux désactiver automatiquement le parallaxe et si c'est possible le réactiver si la carte est dézoomée de manière à ce que les bordures soient à l'intérieur du cadre.
+
+Les vraies tailles des différents objets sont celles là. elles sont établies par rapport à leur taille de base, sans zoom, de l'image téléchargée il me semble, mais ça peut ne pas être ça. à un moment elles étaient correctement synchronisées mais elles ne le sont plus, je ne sais pas pourquoi. il faut les rétablir.
+'As de pique.PNG', realSize: 162
+'dos rouge.png', realSize: 131
+'dos bleu.PNG', realSize: 100
+'Joker (couleur).PNG', realSize: 214
+'Joker (sans couleur).PNG', realSize: 214
+'2 euros.PNG', realSize: 42
+'5 de trèfle.PNG', realSize: 170
+'7 de carreau.PNG', realSize: 224
+'7 de trèfle.PNG', realSize: 140
+'9 de carreau.PNG', realSize: 228
+'Paquet bleu.PNG', realSize: 158 
