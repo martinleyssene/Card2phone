@@ -93,3 +93,5 @@ Les vraies tailles des différents objets sont celles là. elles sont établies 
 '7 de trèfle.PNG', realSize: 140
 '9 de carreau.PNG', realSize: 228
 'Paquet bleu.PNG', realSize: 158 
+
+les limites du parallaxe ne sont pas encore les bonnes, c'est pas le tour de l'écran. tu as fait les autres modifications que je t'ai demandé, comme le truc qui demande le modele du telephone ?
