@@ -177,7 +177,7 @@
 
     #wallpaper {
       position: fixed;
-      top: -40px;
+      top: 0;
       left: 0;
       right: 0;
       bottom: 0;
@@ -694,7 +694,7 @@ function computeWallpaperOffset() {
 
 function applyWallpaperPosition() {
   const wp = document.getElementById('wallpaper');
-  if (wp) wp.style.top = computeWallpaperOffset() + 'px';
+  if (wp) wp.style.backgroundPosition = `0px ${computeWallpaperOffset()}px`;
 }
 
 // ── TOGGLES ──
@@ -1007,35 +1007,53 @@ function isParallaxAllowed() {
 }
 
 function setupParallax() {
-  let smoothX = 0;
-  let smoothY = 0;
+  // smoothNormX/Y : direction d'inclinaison lissée, normalisée entre -1 et 1
+  let smoothNormX = 0;
+  let smoothNormY = 0;
   let animFrame = null;
+  const MAX_TILT_X = 25; // degrés d'inclinaison gauche-droite pour atteindre le bord
+  const MAX_TILT_Y = 20; // degrés d'inclinaison avant-arrière pour atteindre le bord
+  const NEUTRAL_BETA = 45; // inclinaison «neutre» typique en tenant le téléphone
 
   function animate() {
     animFrame = requestAnimationFrame(animate);
     if (!state.objectVisible || isDragging) return;
-    if (!isParallaxAllowed()) return;
 
     const { halfW, halfH } = getObjectHalfSize();
-    const maxX = window.innerWidth - halfW;
-    const maxY = window.innerHeight - halfH;
-    const rawX = currentX + smoothX;
-    const rawY = currentY + smoothY;
-    const clampedX = Math.min(Math.max(rawX, halfW), maxX);
-    const clampedY = Math.min(Math.max(rawY, halfH), maxY);
+    const minX = halfW, maxX = window.innerWidth - halfW;
+    const minY = halfH, maxY = window.innerHeight - halfH;
+
+    let targetX, targetY;
+    if (isParallaxAllowed() && state.settings.parallax) {
+      // Le tilt à fond (norm = ±1) correspond exactement aux bords réels de l'objet
+      targetX = window.innerWidth / 2 + smoothNormX * ((maxX - minX) / 2);
+      targetY = window.innerHeight / 2 + smoothNormY * ((maxY - minY) / 2);
+    } else {
+      targetX = window.innerWidth / 2;
+      targetY = window.innerHeight / 2;
+    }
+    // Sécurité : jamais en dehors des bords réels de l'objet/écran
+    targetX = Math.min(Math.max(targetX, minX), maxX);
+    targetY = Math.min(Math.max(targetY, minY), maxY);
+
+    // On glisse doucement vers la position cible (jamais de téléportation,
+    // que ce soit pour le tilt ou pour un retour après un drag hors-cadre)
+    currentX += (targetX - currentX) * 0.12;
+    currentY += (targetY - currentY) * 0.12;
+
     const img = document.getElementById('object-img');
     img.style.transition = 'none';
-    img.style.left = clampedX + 'px';
-    img.style.top = clampedY + 'px';
+    img.style.left = currentX + 'px';
+    img.style.top = currentY + 'px';
     img.style.transform = `translate(-50%, -50%) scale(${currentScale})`;
   }
 
   window.addEventListener('deviceorientation', e => {
     if (!state.objectVisible || isDragging) return;
-    const targetX = (e.gamma || 0) / 30 * 40;
-    const targetY = ((e.beta || 0) - 45) / 30 * 30;
-    smoothX += (targetX - smoothX) * 0.15;
-    smoothY += (targetY - smoothY) * 0.15;
+    const normX = Math.min(Math.max((e.gamma || 0) / MAX_TILT_X, -1), 1);
+    const normY = Math.min(Math.max(((e.beta || 0) - NEUTRAL_BETA) / MAX_TILT_Y, -1), 1);
+    smoothNormX += (normX - smoothNormX) * 0.15;
+    smoothNormY += (normY - smoothNormY) * 0.15;
   });
 
   animFrame = requestAnimationFrame(animate);
