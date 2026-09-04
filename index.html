@@ -177,7 +177,7 @@
 
     #wallpaper {
       position: fixed;
-      top: 0;
+      top: -40px;
       left: 0;
       right: 0;
       bottom: 0;
@@ -694,7 +694,7 @@ function computeWallpaperOffset() {
 
 function applyWallpaperPosition() {
   const wp = document.getElementById('wallpaper');
-  if (wp) wp.style.backgroundPosition = `0px ${computeWallpaperOffset()}px`;
+  if (wp) wp.style.top = computeWallpaperOffset() + 'px';
 }
 
 // ── TOGGLES ──
@@ -1011,8 +1011,8 @@ function setupParallax() {
   let smoothNormX = 0;
   let smoothNormY = 0;
   let animFrame = null;
-  const MAX_TILT_X = 25; // degrés d'inclinaison gauche-droite pour atteindre le bord
-  const MAX_TILT_Y = 20; // degrés d'inclinaison avant-arrière pour atteindre le bord
+  const MAX_TILT_X = 14; // degrés d'inclinaison gauche-droite pour atteindre le bord
+  const MAX_TILT_Y = 11; // degrés d'inclinaison avant-arrière pour atteindre le bord
   const NEUTRAL_BETA = 45; // inclinaison «neutre» typique en tenant le téléphone
 
   function animate() {
