@@ -244,6 +244,22 @@
       top: 50%; left: 50%;
       transform: translate(-50%, -50%);
     }
+
+    #debug-overlay {
+      position: fixed;
+      top: 10px;
+      left: 10px;
+      z-index: 9999;
+      background: rgba(0,0,0,0.75);
+      color: #0f0;
+      font-family: monospace;
+      font-size: 11px;
+      padding: 8px;
+      border-radius: 6px;
+      white-space: pre;
+      pointer-events: none;
+      display: none;
+    }
   </style>
 </head>
 <body>
@@ -372,6 +388,7 @@
   <div id="object-display">
     <img id="object-img" src="" alt="">
   </div>
+  <div id="debug-overlay"></div>
 </div>
 
 <!-- PAGE APERÇU TAILLE -->
@@ -441,6 +458,7 @@ let currentX = 0;
 let currentY = 0;
 let lastShake = 0;
 let isDragging = false;
+const DEBUG_MODE = new URLSearchParams(location.search).has('debug');
 
 // ── INIT ──
 window.onload = () => {
@@ -792,6 +810,11 @@ async function launch() {
   }
 
   document.addEventListener('visibilitychange', onVisibilityChange);
+
+  if (DEBUG_MODE) {
+    const dbg = document.getElementById('debug-overlay');
+    dbg.style.display = 'block';
+  }
 }
 
 function requestSensorPermissions() {
@@ -1050,10 +1073,29 @@ function setupParallax() {
 
   window.addEventListener('deviceorientation', e => {
     if (!state.objectVisible || isDragging) return;
-    const normX = Math.min(Math.max((e.gamma || 0) / MAX_TILT_X, -1), 1);
-    const normY = Math.min(Math.max(((e.beta || 0) - NEUTRAL_BETA) / MAX_TILT_Y, -1), 1);
+    const gammaRaw = e.gamma || 0;
+    const betaRaw = e.beta || 0;
+    const normX = Math.min(Math.max(gammaRaw / MAX_TILT_X, -1), 1);
+    const normY = Math.min(Math.max((betaRaw - NEUTRAL_BETA) / MAX_TILT_Y, -1), 1);
     smoothNormX += (normX - smoothNormX) * 0.15;
     smoothNormY += (normY - smoothNormY) * 0.15;
+
+    if (DEBUG_MODE) {
+      const { halfW, halfH } = getObjectHalfSize();
+      const minX = halfW, maxX = window.innerWidth - halfW;
+      const minY = halfH, maxY = window.innerHeight - halfH;
+      const dbg = document.getElementById('debug-overlay');
+      if (dbg) dbg.textContent =
+        `gamma: ${gammaRaw.toFixed(1)}  beta: ${betaRaw.toFixed(1)}\n` +
+        `normX: ${normX.toFixed(2)}  normY: ${normY.toFixed(2)}\n` +
+        `smoothNormX: ${smoothNormX.toFixed(2)}  smoothNormY: ${smoothNormY.toFixed(2)}\n` +
+        `halfW: ${halfW.toFixed(0)}  halfH: ${halfH.toFixed(0)}\n` +
+        `screen: ${window.innerWidth}x${window.innerHeight}\n` +
+        `minX-maxX: ${minX.toFixed(0)}-${maxX.toFixed(0)}\n` +
+        `minY-maxY: ${minY.toFixed(0)}-${maxY.toFixed(0)}\n` +
+        `currentX: ${currentX.toFixed(0)}  currentY: ${currentY.toFixed(0)}\n` +
+        `parallaxAllowed: ${isParallaxAllowed()}  toggle: ${state.settings.parallax}`;
+    }
   });
 
   animFrame = requestAnimationFrame(animate);
