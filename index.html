@@ -177,7 +177,7 @@
 
     #wallpaper {
       position: fixed;
-      top: -40px;
+      top: 0;
       left: 0;
       right: 0;
       bottom: 0;
@@ -185,6 +185,16 @@
       background-position: top left;
       margin: 0;
       padding: 0;
+    }
+
+    #status-mask {
+      position: fixed;
+      top: 0;
+      left: 0;
+      right: 0;
+      background: #000;
+      z-index: 15;
+      pointer-events: none;
     }
 
     #clock {
@@ -380,6 +390,7 @@
 <!-- PERFORMANCE -->
 <div id="performance-page">
   <div id="wallpaper"></div>
+  <div id="status-mask"></div>
   <div class="tap-zone" id="tap-tl"></div>
   <div class="tap-zone" id="tap-tr"></div>
   <div class="tap-zone" id="tap-bl"></div>
@@ -414,14 +425,14 @@
 const SIZE_CALIBRATION = 1.66;
 
 const phonePresets = [
-  { id: 'auto', name: 'Détection automatique (recommandé)', offset: null },
-  { id: 'iphone11', name: 'iPhone 11', offset: -40 },
-  { id: 'se', name: 'iPhone SE / 6-8 (sans encoche)', offset: -20 },
-  { id: 'notch', name: 'iPhone X à 13 (encoche)', offset: -44 },
-  { id: 'dynamic', name: 'iPhone 14 Pro et + (Dynamic Island)', offset: -54 },
-  { id: 'android-notch', name: 'Android avec encoche / poinçon', offset: -32 },
-  { id: 'android-classic', name: 'Android barre de statut classique', offset: -24 },
-  { id: 'other', name: 'Autre / je ne sais pas', offset: -40 }
+  { id: 'auto', name: 'Détection automatique (recommandé)', height: null },
+  { id: 'iphone11', name: 'iPhone 11', height: 40 },
+  { id: 'se', name: 'iPhone SE / 6-8 (sans encoche)', height: 20 },
+  { id: 'notch', name: 'iPhone X à 13 (encoche)', height: 44 },
+  { id: 'dynamic', name: 'iPhone 14 Pro et + (Dynamic Island)', height: 54 },
+  { id: 'android-notch', name: 'Android avec encoche / poinçon', height: 32 },
+  { id: 'android-classic', name: 'Android barre de statut classique', height: 24 },
+  { id: 'other', name: 'Autre / je ne sais pas', height: 40 }
 ];
 
 const state = {
@@ -698,21 +709,24 @@ function detectSafeAreaTop() {
   return val;
 }
 
-function computeWallpaperOffset() {
+function computeStatusBarHeight() {
   const preset = phonePresets.find(p => p.id === state.phoneModel) || phonePresets[0];
   let base;
-  if (preset.offset === null) {
+  if (preset.height === null) {
     const detected = detectSafeAreaTop();
-    base = detected > 0 ? -detected : -44; // repli si la détection échoue
+    base = detected > 0 ? detected : 44; // repli si la détection échoue
   } else {
-    base = preset.offset;
+    base = preset.height;
   }
-  return base + (state.wallpaperFineTune || 0);
+  return Math.max(0, base + (state.wallpaperFineTune || 0));
 }
 
 function applyWallpaperPosition() {
-  const wp = document.getElementById('wallpaper');
-  if (wp) wp.style.top = computeWallpaperOffset() + 'px';
+  // Le fond d'écran lui-même ne bouge JAMAIS (toujours aligné pile comme la
+  // réalité). On pose à la place un bandeau noir en haut, de la hauteur de la
+  // vraie barre de statut, pour cacher celle -- fausse -- de la photo.
+  const mask = document.getElementById('status-mask');
+  if (mask) mask.style.height = computeStatusBarHeight() + 'px';
 }
 
 // ── TOGGLES ──
@@ -1044,7 +1058,8 @@ function setupParallax() {
 
     const { halfW, halfH } = getObjectHalfSize();
     const minX = halfW, maxX = window.innerWidth - halfW;
-    const minY = halfH, maxY = window.innerHeight - halfH;
+    const statusH = computeStatusBarHeight();
+    const minY = halfH + statusH, maxY = window.innerHeight - halfH;
 
     let targetX, targetY;
     if (isParallaxAllowed() && state.settings.parallax) {
