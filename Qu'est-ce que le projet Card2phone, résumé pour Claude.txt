@@ -72,7 +72,7 @@ Sécurité & Comptes : compte admin + mot de passe, paramètres verrouillés pou
 
 Favoris & Routine : système de favoris, mode routine (nommer/rechercher/partager)
 
-Organisation : catégories d'objets (cartes, pièces, billets...)
+Organisation : catégories d'objets (cartes, pièces, bzillets...)
 
 Discrétion : icône d'app personnalisable, fausse fermeture, catégories cachées selon profil
 
