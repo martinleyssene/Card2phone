@@ -15,7 +15,7 @@ PWA (`index.html`, fichier unique) qui simule un objet apparaissant "derrière" 
 ## Résolu récemment
 - **Taille des objets** : `SIZE_CALIBRATION = 1.66` (facteur global) + `realSize` recalculé individuellement par objet (voir tableau dans le code, objet `state.objects`)
 - **Placement du fond d'écran** : le fond ne bouge plus jamais (aligné pile sur la réalité) ; un bandeau noir séparé (`#status-mask`) cache la fausse barre de statut de la photo, avec sa propre hauteur réglable (presets par téléphone + détection auto `env(safe-area-inset-top)` + curseur de réglage fin)
-- **Parallaxe** : les bords sont maintenant atteints correctement (mapping géométrique inclinaison→position réelle), plus de téléportation au relâchement d'un drag (glissement progressif), et la position "neutre" se calibre automatiquement sur l'angle du téléphone au moment où la carte apparaît (fini le bug d'angle neutre fixe à 45°)
+- **Parallaxe** : les bords ne sont pas atteints correctement, à corriger (mapping géométrique inclinaison→position réelle), plus de téléportation au relâchement d'un drag (glissement progressif), et la position "neutre" se calibre automatiquement sur l'angle du téléphone au moment où la carte apparaît (fini le bug d'angle neutre fixe à 45°)
 - La carte est bloquée contre le bandeau noir du haut (ne passe plus dessous)
 - Mode debug disponible : ajouter `?debug` à l'URL pour voir gamma/beta/positions en direct à l'écran
 
@@ -23,7 +23,7 @@ PWA (`index.html`, fichier unique) qui simule un objet apparaissant "derrière" 
 
 ## Backlog restant
 
-**Objets** : nommer/renommer les objets, retournement au tap, sélection secrète au verso, rotation à deux doigts, taille réelle auto à l'import
+**Objets** : nommer/renommer les objets, retournement au tap, sélection secrète du verso, rotation à deux doigts, taille réelle auto à l'import
 
 **Apparition / effets** : 3 modes (fantôme / progressif auto / progressif contrôlé par geste-gyroscope ou souffle-micro), animations d'entrée personnalisables (fondu/glissement/zoom/rotation), effet de brillance, ombre portée
 
@@ -45,4 +45,4 @@ PWA (`index.html`, fichier unique) qui simule un objet apparaissant "derrière" 
 
 **Compatibilité** : test/adaptation Android, audit sécurité de l'import d'images
 
-**Divers** : le bouton "Réinitialiser les paramètres" (debug) est encore présent, à retirer à terme
+**Divers** : le bouton "Réinitialiser les paramètres" (debug) est encore présent, probablement retiré à terme de la version non admin, mais ne pas supprimer le code le composant, il sera peut-être réintégré, potentiellement sous la forme d'un bouton : rechargement de la page
