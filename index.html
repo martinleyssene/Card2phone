@@ -473,6 +473,12 @@ let lastGamma = 0;
 let lastBeta = 0;
 let baselineGamma = 0;
 let baselineBeta = 0;
+// Décalage manuel : quand on lâche la carte après un drag, ce décalage (par
+// rapport au centre de l'écran) est ajouté à la cible du parallaxe, pour que
+// la carte reste là où on l'a posée au lieu d'être retirée vers le centre.
+let dragOffsetX = 0;
+let dragOffsetY = 0;
+const parallaxSmooth = { x: 0, y: 0 };
 const DEBUG_MODE = new URLSearchParams(location.search).has('debug');
 
 // ── INIT ──
@@ -808,6 +814,8 @@ async function launch() {
   // Position initiale centrée
   currentX = window.innerWidth / 2;
   currentY = window.innerHeight / 2;
+  dragOffsetX = 0;
+  dragOffsetY = 0;
   img.style.left = currentX + 'px';
   img.style.top = currentY + 'px';
   img.style.transform = `translate(-50%, -50%) scale(${currentScale})`;
@@ -861,6 +869,10 @@ function showObject() {
   // «centre» du parallaxe, quelle que soit la façon dont tu tiens le téléphone.
   baselineGamma = lastGamma;
   baselineBeta = lastBeta;
+  dragOffsetX = 0;
+  dragOffsetY = 0;
+  parallaxSmooth.x = 0;
+  parallaxSmooth.y = 0;
   const speed = document.getElementById('speed-slider').value;
   const display = document.getElementById('object-display');
   display.style.transition = `opacity ${speed}ms ease`;
@@ -896,6 +908,8 @@ function hideObject(direction) {
     img.style.visibility = 'hidden';
     currentX = window.innerWidth / 2;
     currentY = window.innerHeight / 2;
+    dragOffsetX = 0;
+    dragOffsetY = 0;
     img.style.left = currentX + 'px';
     img.style.top = currentY + 'px';
     img.style.transform = `translate(-50%, -50%) scale(${baseScale})`;
@@ -958,6 +972,21 @@ function setupDragAndZoom() {
   let pinchStartDist = 0;
   let pinchStartScale = 1;
 
+  function onDragEnd() {
+    dragging = false;
+    isDragging = false;
+    // La carte reste où elle vient d'être lâchée : le tilt actuel devient le
+    // nouveau neutre, et l'écart au centre de l'écran est mémorisé pour que
+    // le parallaxe reparte de là au lieu de retirer la carte vers le centre.
+    baselineGamma = lastGamma;
+    baselineBeta = lastBeta;
+    dragOffsetX = currentX - window.innerWidth / 2;
+    dragOffsetY = currentY - window.innerHeight / 2;
+    parallaxSmooth.x = 0;
+    parallaxSmooth.y = 0;
+    checkIfOutOfBounds();
+  }
+
   // Touch
   img.addEventListener('touchstart', e => {
     if (e.touches.length === 1) {
@@ -1001,9 +1030,7 @@ function setupDragAndZoom() {
   }, { passive: true });
 
   img.addEventListener('touchend', () => {
-    dragging = false;
-    isDragging = false;
-    checkIfOutOfBounds();
+    onDragEnd();
   });
 
   // Mouse (pour test PC)
@@ -1025,8 +1052,7 @@ function setupDragAndZoom() {
   });
 
   document.addEventListener('mouseup', () => {
-    dragging = false;
-    checkIfOutOfBounds();
+    onDragEnd();
   });
 }
 
@@ -1052,9 +1078,6 @@ function isParallaxAllowed() {
 }
 
 function setupParallax() {
-  // smoothNormX/Y : direction d'inclinaison lissée, normalisée entre -1 et 1
-  let smoothNormX = 0;
-  let smoothNormY = 0;
   let animFrame = null;
   const MAX_TILT_X = 14; // degrés d'inclinaison gauche-droite (depuis ta position de départ) pour atteindre le bord
   const MAX_TILT_Y = 11; // degrés d'inclinaison avant-arrière (depuis ta position de départ) pour atteindre le bord
@@ -1070,12 +1093,13 @@ function setupParallax() {
 
     let targetX, targetY;
     if (isParallaxAllowed() && state.settings.parallax) {
-      // Le tilt à fond (norm = ±1) correspond exactement aux bords réels de l'objet
-      targetX = window.innerWidth / 2 + smoothNormX * ((maxX - minX) / 2);
-      targetY = window.innerHeight / 2 + smoothNormY * ((maxY - minY) / 2);
+      // Le tilt à fond (norm = ±1) correspond exactement aux bords réels de l'objet,
+      // en partant du décalage laissé par un éventuel drag manuel (dragOffsetX/Y)
+      targetX = window.innerWidth / 2 + dragOffsetX + parallaxSmooth.x * ((maxX - minX) / 2);
+      targetY = window.innerHeight / 2 + dragOffsetY + parallaxSmooth.y * ((maxY - minY) / 2);
     } else {
-      targetX = window.innerWidth / 2;
-      targetY = window.innerHeight / 2;
+      targetX = window.innerWidth / 2 + dragOffsetX;
+      targetY = window.innerHeight / 2 + dragOffsetY;
     }
     // Sécurité : jamais en dehors des bords réels de l'objet/écran
     targetX = Math.min(Math.max(targetX, minX), maxX);
@@ -1101,8 +1125,8 @@ function setupParallax() {
     if (!state.objectVisible || isDragging) return;
     const normX = Math.min(Math.max((gammaRaw - baselineGamma) / MAX_TILT_X, -1), 1);
     const normY = Math.min(Math.max((betaRaw - baselineBeta) / MAX_TILT_Y, -1), 1);
-    smoothNormX += (normX - smoothNormX) * 0.15;
-    smoothNormY += (normY - smoothNormY) * 0.15;
+    parallaxSmooth.x += (normX - parallaxSmooth.x) * 0.15;
+    parallaxSmooth.y += (normY - parallaxSmooth.y) * 0.15;
 
     if (DEBUG_MODE) {
       const { halfW, halfH } = getObjectHalfSize();
@@ -1112,12 +1136,13 @@ function setupParallax() {
       if (dbg) dbg.textContent =
         `gamma: ${gammaRaw.toFixed(1)}  beta: ${betaRaw.toFixed(1)}\n` +
         `normX: ${normX.toFixed(2)}  normY: ${normY.toFixed(2)}\n` +
-        `smoothNormX: ${smoothNormX.toFixed(2)}  smoothNormY: ${smoothNormY.toFixed(2)}\n` +
+        `smoothNormX: ${parallaxSmooth.x.toFixed(2)}  smoothNormY: ${parallaxSmooth.y.toFixed(2)}\n` +
         `halfW: ${halfW.toFixed(0)}  halfH: ${halfH.toFixed(0)}\n` +
         `screen: ${window.innerWidth}x${window.innerHeight}\n` +
         `minX-maxX: ${minX.toFixed(0)}-${maxX.toFixed(0)}\n` +
         `minY-maxY: ${minY.toFixed(0)}-${maxY.toFixed(0)}\n` +
         `currentX: ${currentX.toFixed(0)}  currentY: ${currentY.toFixed(0)}\n` +
+        `dragOffsetX: ${dragOffsetX.toFixed(0)}  dragOffsetY: ${dragOffsetY.toFixed(0)}\n` +
         `parallaxAllowed: ${isParallaxAllowed()}  toggle: ${state.settings.parallax}`;
     }
   });
