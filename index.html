@@ -41,6 +41,11 @@
       <input type="range" id="exit-speed-slider" min="50" max="1000" value="300" style="display:none" oninput="updateExitSpeed()">
     </div>
     <div class="setting-row">
+      <span class="setting-label">Seuil de sortie (% hors écran)</span>
+      <input type="range" id="exit-threshold-slider" min="50" max="95" value="80" oninput="updateExitThreshold(this.value)">
+      <span class="setting-value" id="exit-threshold-val">80%</span>
+    </div>
+    <div class="setting-row">
       <span class="setting-label">Verrouiller le zoom</span>
       <div class="toggle" id="toggle-zoomLock" onclick="toggleSetting(this)"></div>
     </div>

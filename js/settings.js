@@ -32,6 +32,13 @@ function toggleSensors(el) {
   });
 }
 
+// ── SEUIL DE SORTIE ──
+function updateExitThreshold(val) {
+  state.settings.exitThreshold = parseInt(val);
+  document.getElementById('exit-threshold-val').textContent = val + '%';
+  saveToStorage();
+}
+
 // ── DÉCLENCHEURS ──
 function setupTriggerButtons() {
   document.querySelectorAll('.trigger-btn').forEach(btn => {

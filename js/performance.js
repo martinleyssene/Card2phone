@@ -155,9 +155,9 @@ function checkIfOutOfBounds() {
   const h = window.innerHeight;
   const visibleX = Math.min(rect.right, w) - Math.max(rect.left, 0);
   const visibleY = Math.min(rect.bottom, h) - Math.max(rect.top, 0);
-  // Il faut qu'environ 75-80% de la carte soit sortie de l'écran (donc ~20%
-  // encore visible) pour déclencher la disparition.
-  const VISIBLE_RATIO_THRESHOLD = 0.2;
+  // Il faut qu'une part réglable de la carte soit sortie de l'écran (par
+  // défaut ~80%, donc ~20% encore visible) pour déclencher la disparition.
+  const VISIBLE_RATIO_THRESHOLD = 1 - ((state.settings.exitThreshold ?? 80) / 100);
   const visibleRatioX = rect.width > 0 ? visibleX / rect.width : 0;
   const visibleRatioY = rect.height > 0 ? visibleY / rect.height : 0;
 

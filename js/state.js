@@ -37,7 +37,7 @@ const state = {
   sensorPermission: false,
   settings: {
     parallax: true, vibration: true, sound: false,
-    wakelock: true, repeat: false, zoomLock: false
+    wakelock: true, repeat: false, zoomLock: false, exitThreshold: 80
   }
 };
 
@@ -84,6 +84,11 @@ window.onload = () => {
     document.getElementById('exit-speed-slider').value = exitSpeed;
     document.getElementById('exit-speed-val').textContent = exitSpeed + 'ms';
   }
+  const exitThresholdSlider = document.getElementById('exit-threshold-slider');
+  if (exitThresholdSlider) {
+    exitThresholdSlider.value = state.settings.exitThreshold;
+    document.getElementById('exit-threshold-val').textContent = state.settings.exitThreshold + '%';
+  }
   const selectedId = localStorage.getItem('mp_selected');
   if (selectedId) {
     const found = state.objects.find(o => o.id.toString() === selectedId);
@@ -93,6 +98,14 @@ window.onload = () => {
   if (trigger) state.trigger = trigger;
   setupTriggerButtons();
   syncSensorsToggleUI();
+
+  // Revalide silencieusement la permission capteurs si elle était accordée
+  // lors d'une session précédente : si elle a été révoquée entre-temps (réglages
+  // iOS, etc.), ça corrige le toggle/avertissement sans jamais rouvrir de
+  // popup (iOS ne re-prompt pas une fois déjà accordé/refusé pour ce site).
+  if (state.sensorPermission) {
+    requestSensorPermissions();
+  }
 
   // Si le téléphone s'est éteint/rechargé pendant une performance, on relance
   // directement sur le faux fond d'écran au lieu de revenir à la sélection.
