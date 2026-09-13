@@ -9,18 +9,26 @@ function toggleSetting(el) {
   saveToStorage();
 }
 
+// Garde le toggle "Capteurs" (et le message d'avertissement) synchronisés
+// avec l'état réel de la permission, quel que soit le chemin par lequel elle
+// a été accordée (toggle Capteurs, toggle Parallaxe, ou choix du déclencheur "Shake").
+function syncSensorsToggleUI() {
+  const toggle = document.getElementById('toggle-sensors');
+  const hint = document.getElementById('sensors-hint');
+  if (toggle) toggle.classList.toggle('on', state.sensorPermission);
+  if (hint) hint.style.display = state.sensorPermission ? 'none' : 'block';
+}
+
 function toggleSensors(el) {
-  if (el.classList.contains('on')) {
-    el.classList.remove('on');
+  if (state.sensorPermission) {
     state.sensorPermission = false;
     saveToStorage();
+    syncSensorsToggleUI();
     return;
   }
   requestSensorPermissions().then(() => {
-    if (state.sensorPermission) {
-      el.classList.add('on');
-      saveToStorage();
-    }
+    saveToStorage();
+    syncSensorsToggleUI();
   });
 }
 

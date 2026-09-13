@@ -20,8 +20,7 @@
     <div class="object-item add-btn" onclick="importObject()">+</div>
   </div>
 
-
-  <p class="section-title">Réglages</p>
+  <p class="section-title">Objet sélectionné</p>
   <div class="settings-block">
     <div class="setting-row">
       <span class="setting-label">Taille</span>
@@ -36,6 +35,25 @@
       <span class="setting-value" id="speed-val">300ms</span>
     </div>
     <div class="setting-row">
+      <span class="setting-label">Vitesse de sortie d'écran</span>
+      <span class="setting-value" id="exit-speed-val">300ms</span>
+      <button onclick="openExitSpeedPreview()" style="background:#222;color:#fff;border:none;padding:6px 12px;border-radius:8px;font-size:13px">Tester</button>
+      <input type="range" id="exit-speed-slider" min="50" max="1000" value="300" style="display:none" oninput="updateExitSpeed()">
+    </div>
+    <div class="setting-row">
+      <span class="setting-label">Verrouiller le zoom</span>
+      <div class="toggle" id="toggle-zoomLock" onclick="toggleSetting(this)"></div>
+    </div>
+  </div>
+
+  <p class="section-title">Réglages</p>
+  <div class="settings-block">
+    <div class="setting-row">
+      <span class="setting-label">Modèle de téléphone</span>
+      <select id="phone-model-select" onchange="onPhoneModelChange()" style="background:#222;color:#fff;border:1px solid #444;border-radius:8px;padding:6px;font-size:13px;flex:1;max-width:180px"></select>
+    </div>
+    <p id="phone-detect-info" style="font-size:11px;color:#666;margin:-6px 0 10px;"></p>
+    <div class="setting-row">
       <span class="setting-label">Parallaxe</span>
       <div class="toggle on" id="toggle-parallax" onclick="toggleSetting(this)"></div>
     </div>
@@ -43,6 +61,7 @@
       <span class="setting-label">Capteurs (shake/parallaxe)</span>
       <div class="toggle" id="toggle-sensors" onclick="toggleSensors(this)"></div>
     </div>
+    <p id="sensors-hint" style="font-size:11px;color:#e0a020;margin:-6px 0 10px;">⚠️ Active ce réglage pour que le shake et le parallaxe fonctionnent (une demande d'autorisation peut s'afficher)</p>
     <div class="setting-row">
       <span class="setting-label">Vibration</span>
       <div class="toggle on" id="toggle-vibration" onclick="toggleSetting(this)"></div>
@@ -58,10 +77,6 @@
     <div class="setting-row">
       <span class="setting-label">Mode répétition</span>
       <div class="toggle" id="toggle-repeat" onclick="toggleSetting(this)"></div>
-    </div>
-    <div class="setting-row">
-      <span class="setting-label">Verrouiller le zoom</span>
-      <div class="toggle" id="toggle-zoomLock" onclick="toggleSetting(this)"></div>
     </div>
   </div>
 
@@ -110,10 +125,6 @@
       <button onclick="document.getElementById('wp3-input').click()" style="background:#222;color:#fff;border:none;padding:6px 12px;border-radius:8px;font-size:13px">Choisir</button>
     </div>
     <div class="setting-row">
-      <span class="setting-label">Modèle de téléphone</span>
-      <select id="phone-model-select" onchange="onPhoneModelChange()" style="background:#222;color:#fff;border:1px solid #444;border-radius:8px;padding:6px;font-size:13px;flex:1;max-width:180px"></select>
-    </div>
-    <div class="setting-row">
       <span class="setting-label">Réglage fin position</span>
       <input type="range" id="wallpaper-finetune" min="-60" max="60" value="0" oninput="onFineTuneChange(this.value)">
       <span class="setting-value" id="finetune-val">0px</span>
@@ -150,6 +161,17 @@
   <span style="color:#fff;font-size:16px;">%</span>
 </div>
 <p style="display:none" id="size-val-preview">100%</p>
+  </div>
+</div>
+
+<!-- PAGE TEST VITESSE DE SORTIE -->
+<div id="exit-speed-preview-page" style="display:none;position:fixed;inset:0;background:#000;z-index:200;overflow:hidden;">
+  <button onclick="closeExitSpeedPreview()" style="position:fixed;top:30px;right:20px;background:rgba(0,0,0,0.6);border:none;color:#fff;font-size:32px;cursor:pointer;z-index:999;width:50px;height:50px;border-radius:25px;display:flex;align-items:center;justify-content:center;">✕</button>
+  <img id="exit-speed-preview-img" src="" style="position:absolute;left:50%;top:50%;transform:translate(-50%,-50%);object-fit:contain;max-height:40vh;">
+  <div style="position:absolute;bottom:40px;left:20px;right:20px;">
+    <input type="range" id="exit-speed-slider-preview" min="50" max="1000" value="300" style="-webkit-appearance:none;appearance:none;width:100%;height:4px;background:#333;border-radius:2px;outline:none;" oninput="updateExitSpeedFromPreview(this.value)">
+    <div style="text-align:center;color:#fff;font-size:15px;margin-top:10px;" id="exit-speed-val-preview">300ms</div>
+    <button onclick="testExitAnimation()" style="margin-top:16px;width:100%;background:#fff;color:#000;border:none;padding:14px;border-radius:12px;font-size:15px;font-weight:600;">Tester la sortie ▶</button>
   </div>
 </div>
 

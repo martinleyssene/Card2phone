@@ -36,5 +36,6 @@ function saveToStorage() {
     localStorage.setItem('mp_selected', state.selectedObject ? state.selectedObject.id : null);
     localStorage.setItem('mp_size', document.getElementById('size-slider').value);
     localStorage.setItem('mp_speed', document.getElementById('speed-slider').value);
+    localStorage.setItem('mp_exitspeed', document.getElementById('exit-speed-slider').value);
   } catch(e) {}
 }

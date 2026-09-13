@@ -2,6 +2,10 @@
 async function launch() {
   if (!state.selectedObject) { alert('Sélectionne un objet !'); return; }
 
+  // Mémorise qu'on est en performance : si le téléphone s'éteint/se
+  // recharge, on relance directement sur cette page au réveil.
+  try { localStorage.setItem('mp_inPerformance', '1'); } catch(e) {}
+
   document.getElementById('selection-page').style.display = 'none';
   const perf = document.getElementById('performance-page');
   perf.style.display = 'block';
@@ -13,6 +17,9 @@ async function launch() {
     state.currentWallpaper = wpIndex;
   }
   applyWallpaperPosition();
+  // Sur certains iPhone, env(safe-area-inset-top) n'est pas encore résolu au
+  // tout premier rendu : on réapplique une fois de plus après un court délai.
+  setTimeout(applyWallpaperPosition, 150);
 
   // Objet
   const size = document.getElementById('size-slider').value;
@@ -74,6 +81,7 @@ function requestSensorPermissions() {
       state.sensorPermission = true;
       saveToStorage();
     }
+    syncSensorsToggleUI();
   });
 }
 
@@ -102,7 +110,7 @@ function hideObject(direction) {
   state.objectVisible = false;
   const img = document.getElementById('object-img');
   const display = document.getElementById('object-display');
-  const speed = parseInt(document.getElementById('speed-slider').value);
+  const speed = parseInt(document.getElementById('exit-speed-slider').value);
 
   let tx = 0, ty = 0;
   const dist = Math.max(window.innerWidth, window.innerHeight);
@@ -147,12 +155,15 @@ function checkIfOutOfBounds() {
   const h = window.innerHeight;
   const visibleX = Math.min(rect.right, w) - Math.max(rect.left, 0);
   const visibleY = Math.min(rect.bottom, h) - Math.max(rect.top, 0);
-  const halfW = rect.width / 2;
-  const halfH = rect.height / 2;
+  // Il faut qu'environ 75-80% de la carte soit sortie de l'écran (donc ~20%
+  // encore visible) pour déclencher la disparition.
+  const VISIBLE_RATIO_THRESHOLD = 0.2;
+  const visibleRatioX = rect.width > 0 ? visibleX / rect.width : 0;
+  const visibleRatioY = rect.height > 0 ? visibleY / rect.height : 0;
 
-  if (visibleX < halfW) {
+  if (visibleRatioX < VISIBLE_RATIO_THRESHOLD) {
     hideObject(currentX > w / 2 ? 'right' : 'left');
-  } else if (visibleY < halfH) {
+  } else if (visibleRatioY < VISIBLE_RATIO_THRESHOLD) {
     hideObject(currentY > h / 2 ? 'down' : 'up');
   }
 }
@@ -182,12 +193,24 @@ function onShake(e) {
 }
 
 // ── EXTINCTION ÉCRAN ──
-function onVisibilityChange() {
-  if (document.hidden) exitPerformance();
+async function onVisibilityChange() {
+  if (document.hidden) {
+    // Le téléphone s'éteint ou l'app passe en arrière-plan : on NE quitte
+    // plus la performance, pour que l'app soit encore sur le faux fond
+    // d'écran au réveil du téléphone.
+    return;
+  }
+  // Le système relâche automatiquement le wake lock à l'extinction ; on le
+  // redemande au réveil si on est toujours sur la page de performance.
+  if (state.settings.wakelock && navigator.wakeLock &&
+      document.getElementById('performance-page').style.display === 'block') {
+    try { wakeLock = await navigator.wakeLock.request('screen'); } catch(e) {}
+  }
 }
 
 // ── SORTIE ──
 function exitPerformance() {
+  try { localStorage.removeItem('mp_inPerformance'); } catch(e) {}
   hideObject();
   document.getElementById('performance-page').style.display = 'none';
   document.getElementById('selection-page').style.display = 'flex';

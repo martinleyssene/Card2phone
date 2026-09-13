@@ -115,6 +115,11 @@ function setupParallax() {
   let animFrame = null;
   const MAX_TILT_X = 14; // degrés d'inclinaison gauche-droite (depuis ta position de départ) pour atteindre le bord
   const MAX_TILT_Y = 11; // degrés d'inclinaison avant-arrière (depuis ta position de départ) pour atteindre le bord
+  // Amplitude MAX du parallaxe, en pixels, indépendante de la taille de
+  // l'objet. Sans ça, un petit objet (halfW/halfH proche de 0) a une plage
+  // de déplacement qui approche la largeur totale de l'écran, ce qui le
+  // faisait bouger de façon beaucoup plus rapide et erratique qu'un gros objet.
+  const PARALLAX_MAX_AMPLITUDE = 130;
 
   function animate() {
     animFrame = requestAnimationFrame(animate);
@@ -124,13 +129,15 @@ function setupParallax() {
     const minX = halfW, maxX = window.innerWidth - halfW;
     const statusH = computeStatusBarHeight();
     const minY = halfH + statusH, maxY = window.innerHeight - halfH;
+    const ampX = Math.min((maxX - minX) / 2, PARALLAX_MAX_AMPLITUDE);
+    const ampY = Math.min((maxY - minY) / 2, PARALLAX_MAX_AMPLITUDE);
 
     let targetX, targetY;
     if (isParallaxAllowed() && state.settings.parallax) {
-      // Le tilt à fond (norm = ±1) correspond exactement aux bords réels de l'objet,
-      // en partant du décalage laissé par un éventuel drag manuel (dragOffsetX/Y)
-      targetX = window.innerWidth / 2 + dragOffsetX + parallaxSmooth.x * ((maxX - minX) / 2);
-      targetY = window.innerHeight / 2 + dragOffsetY + parallaxSmooth.y * ((maxY - minY) / 2);
+      // Le tilt à fond (norm = ±1) correspond à ampX/ampY, en partant du
+      // décalage laissé par un éventuel drag manuel (dragOffsetX/Y)
+      targetX = window.innerWidth / 2 + dragOffsetX + parallaxSmooth.x * ampX;
+      targetY = window.innerHeight / 2 + dragOffsetY + parallaxSmooth.y * ampY;
     } else {
       targetX = window.innerWidth / 2 + dragOffsetX;
       targetY = window.innerHeight / 2 + dragOffsetY;
@@ -141,8 +148,8 @@ function setupParallax() {
 
     // On glisse doucement vers la position cible (jamais de téléportation,
     // que ce soit pour le tilt ou pour un retour après un drag hors-cadre)
-    currentX += (targetX - currentX) * 0.12;
-    currentY += (targetY - currentY) * 0.12;
+    currentX += (targetX - currentX) * 0.1;
+    currentY += (targetY - currentY) * 0.1;
 
     const img = document.getElementById('object-img');
     img.style.transition = 'none';
@@ -159,8 +166,8 @@ function setupParallax() {
     if (!state.objectVisible || isDragging) return;
     const normX = Math.min(Math.max((gammaRaw - baselineGamma) / MAX_TILT_X, -1), 1);
     const normY = Math.min(Math.max((betaRaw - baselineBeta) / MAX_TILT_Y, -1), 1);
-    parallaxSmooth.x += (normX - parallaxSmooth.x) * 0.15;
-    parallaxSmooth.y += (normY - parallaxSmooth.y) * 0.15;
+    parallaxSmooth.x += (normX - parallaxSmooth.x) * 0.12;
+    parallaxSmooth.y += (normY - parallaxSmooth.y) * 0.12;
 
     if (DEBUG_MODE) {
       const { halfW, halfH } = getObjectHalfSize();

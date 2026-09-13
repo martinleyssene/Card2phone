@@ -79,6 +79,11 @@ window.onload = () => {
     document.getElementById('speed-slider').value = speed;
     document.getElementById('speed-val').textContent = speed + 'ms';
   }
+  const exitSpeed = localStorage.getItem('mp_exitspeed');
+  if (exitSpeed) {
+    document.getElementById('exit-speed-slider').value = exitSpeed;
+    document.getElementById('exit-speed-val').textContent = exitSpeed + 'ms';
+  }
   const selectedId = localStorage.getItem('mp_selected');
   if (selectedId) {
     const found = state.objects.find(o => o.id.toString() === selectedId);
@@ -87,4 +92,11 @@ window.onload = () => {
   const trigger = localStorage.getItem('mp_trigger');
   if (trigger) state.trigger = trigger;
   setupTriggerButtons();
+  syncSensorsToggleUI();
+
+  // Si le téléphone s'est éteint/rechargé pendant une performance, on relance
+  // directement sur le faux fond d'écran au lieu de revenir à la sélection.
+  if (localStorage.getItem('mp_inPerformance') === '1' && state.selectedObject) {
+    launch();
+  }
 };

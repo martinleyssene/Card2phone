@@ -68,4 +68,17 @@ function applyWallpaperPosition() {
   // vraie barre de statut, pour cacher celle -- fausse -- de la photo.
   const mask = document.getElementById('status-mask');
   if (mask) mask.style.height = computeStatusBarHeight() + 'px';
+  updatePhoneDetectInfo();
+}
+
+function updatePhoneDetectInfo() {
+  // Affiche la valeur réellement détectée (ou l'échec de détection) pour
+  // pouvoir diagnostiquer sans avoir besoin du mode ?debug.
+  const info = document.getElementById('phone-detect-info');
+  if (!info) return;
+  if (state.phoneModel !== 'auto') { info.textContent = ''; return; }
+  const detected = detectSafeAreaTop();
+  info.textContent = detected > 0
+    ? `Détection auto : ${detected.toFixed(0)}px`
+    : `Détection auto : échec (valeur de secours 44px utilisée). Ne fonctionne que si l'app est ajoutée à l'écran d'accueil et lancée en plein écran depuis là — sinon choisis ton modèle manuellement dans la liste.`;
 }

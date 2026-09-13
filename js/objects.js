@@ -90,6 +90,53 @@ function updateSizeFromInput(val) {
   updateSizeFromPreview(val);
 }
 
+// ── VITESSE DE SORTIE (test) ──
+function updateExitSpeed() {
+  const val = document.getElementById('exit-speed-slider').value;
+  document.getElementById('exit-speed-val').textContent = val + 'ms';
+  saveToStorage();
+}
+
+function openExitSpeedPreview() {
+  if (!state.selectedObject) { alert('Sélectionne un objet d\'abord !'); return; }
+  const page = document.getElementById('exit-speed-preview-page');
+  const img = document.getElementById('exit-speed-preview-img');
+  const val = document.getElementById('exit-speed-slider').value;
+  img.src = state.selectedObject.src;
+  img.style.transition = 'none';
+  img.style.transform = 'translate(-50%, -50%)';
+  document.getElementById('exit-speed-slider-preview').value = val;
+  document.getElementById('exit-speed-val-preview').textContent = val + 'ms';
+  page.style.display = 'block';
+}
+
+function closeExitSpeedPreview() {
+  document.getElementById('exit-speed-preview-page').style.display = 'none';
+}
+
+function updateExitSpeedFromPreview(val) {
+  document.getElementById('exit-speed-val-preview').textContent = val + 'ms';
+  document.getElementById('exit-speed-slider').value = val;
+  document.getElementById('exit-speed-val').textContent = val + 'ms';
+  saveToStorage();
+}
+
+function testExitAnimation() {
+  const img = document.getElementById('exit-speed-preview-img');
+  const speed = parseInt(document.getElementById('exit-speed-slider-preview').value);
+  const dist = Math.max(window.innerWidth, window.innerHeight);
+  img.style.transition = 'none';
+  img.style.transform = 'translate(-50%, -50%)';
+  // force reflow pour que la transition suivante reparte bien du centre
+  void img.offsetWidth;
+  img.style.transition = `transform ${speed}ms ease-in`;
+  img.style.transform = `translate(calc(-50% + ${dist}px), -50%)`;
+  setTimeout(() => {
+    img.style.transition = 'none';
+    img.style.transform = 'translate(-50%, -50%)';
+  }, speed + 80);
+}
+
 function importObject() {
   document.getElementById('import-input').click();
 }
