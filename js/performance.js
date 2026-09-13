@@ -82,6 +82,14 @@ function requestSensorPermissions() {
       saveToStorage();
     }
     syncSensorsToggleUI();
+  }).catch(() => {
+    // La demande a échoué (souvent parce qu'elle est relancée sans geste
+    // utilisateur, ou parce que la permission a été révoquée côté iOS) :
+    // sans ce filet, le toggle restait affiché comme actif indéfiniment,
+    // même quand les capteurs ne répondaient plus vraiment.
+    state.sensorPermission = false;
+    saveToStorage();
+    syncSensorsToggleUI();
   });
 }
 
@@ -114,11 +122,16 @@ function hideObject(direction) {
 
   let tx = 0, ty = 0;
   const dist = Math.max(window.innerWidth, window.innerHeight);
+  // direction peut combiner un axe X et un axe Y (ex: {x:'right', y:'up'})
+  // pour que la carte puisse sortir en diagonale, par un coin de l'écran,
+  // au lieu d'être forcée à sortir bien alignée sur un seul bord.
+  const dx = direction && direction.x;
+  const dy = direction && direction.y;
 
-  if (direction === 'right') tx = dist;
-  else if (direction === 'left') tx = -dist;
-  else if (direction === 'down') ty = dist;
-  else if (direction === 'up') ty = -dist;
+  if (dx === 'right') tx = dist;
+  else if (dx === 'left') tx = -dist;
+  if (dy === 'down') ty = dist;
+  else if (dy === 'up') ty = -dist;
 
   img.style.transition = `transform ${speed}ms ease-in`;
   img.style.transition = `transform ${speed}ms ease-in`;
@@ -160,11 +173,16 @@ function checkIfOutOfBounds() {
   const VISIBLE_RATIO_THRESHOLD = 1 - ((state.settings.exitThreshold ?? 80) / 100);
   const visibleRatioX = rect.width > 0 ? visibleX / rect.width : 0;
   const visibleRatioY = rect.height > 0 ? visibleY / rect.height : 0;
+  const outX = visibleRatioX < VISIBLE_RATIO_THRESHOLD;
+  const outY = visibleRatioY < VISIBLE_RATIO_THRESHOLD;
 
-  if (visibleRatioX < VISIBLE_RATIO_THRESHOLD) {
-    hideObject(currentX > w / 2 ? 'right' : 'left');
-  } else if (visibleRatioY < VISIBLE_RATIO_THRESHOLD) {
-    hideObject(currentY > h / 2 ? 'down' : 'up');
+  // Si les deux axes sont dépassés en même temps (carte tirée vers un coin),
+  // on sort en diagonale plutôt que de forcer un alignement sur un seul bord.
+  if (outX || outY) {
+    hideObject({
+      x: outX ? (currentX > w / 2 ? 'right' : 'left') : null,
+      y: outY ? (currentY > h / 2 ? 'down' : 'up') : null
+    });
   }
 }
 
