@@ -124,12 +124,11 @@ function setupParallax() {
     const minX = halfW, maxX = window.innerWidth - halfW;
     const statusH = computeStatusBarHeight();
     const minY = halfH + statusH, maxY = window.innerHeight - halfH;
-    // Amplitude proportionnelle à la taille RÉELLE de l'objet affiché (pas
-    // à la taille de l'écran) : un petit objet se déplace sur une petite
-    // distance, un gros objet sur une plus grande, comme dans la vraie vie.
-    // Un plancher évite qu'un objet minuscule semble totalement immobile.
-    const ampX = Math.min((maxX - minX) / 2, Math.max(halfW * 1.8, 50));
-    const ampY = Math.min((maxY - minY) / 2, Math.max(halfH * 1.8, 50));
+    // La ZONE de déplacement va d'un bord à l'autre de l'écran, quelle que
+    // soit la taille de l'objet (un tilt à fond amène toujours l'objet au
+    // bord réel de l'écran).
+    const ampX = (maxX - minX) / 2;
+    const ampY = (maxY - minY) / 2;
 
     let targetX, targetY;
     if (isParallaxAllowed() && state.settings.parallax) {
@@ -145,10 +144,21 @@ function setupParallax() {
     targetX = Math.min(Math.max(targetX, minX), maxX);
     targetY = Math.min(Math.max(targetY, minY), maxY);
 
+    // La VITESSE à laquelle l'objet rattrape sa cible dépend :
+    // - de sa taille (un petit objet bouge moins vite qu'un gros, sinon il
+    //   semble glisser de façon disproportionnée et erratique)
+    // - de l'intensité de l'inclinaison actuelle (plus on incline fort, plus
+    //   ça accélère ; proche du neutre, ça ralentit)
+    const REFERENCE_HALF = 100; // ~demi-largeur d'un objet à taille "normale"
+    const sizeFactor = Math.min(1, Math.max(0.25, ((halfW + halfH) / 2) / REFERENCE_HALF));
+    const tiltMag = Math.min(1, Math.hypot(parallaxSmooth.x, parallaxSmooth.y));
+    const tiltFactor = 0.5 + tiltMag * 1.0; // 0.5x au neutre → 1.5x à fond
+    const lerp = Math.min(0.22, Math.max(0.025, 0.09 * sizeFactor * tiltFactor));
+
     // On glisse doucement vers la position cible (jamais de téléportation,
     // que ce soit pour le tilt ou pour un retour après un drag hors-cadre)
-    currentX += (targetX - currentX) * 0.07;
-    currentY += (targetY - currentY) * 0.07;
+    currentX += (targetX - currentX) * lerp;
+    currentY += (targetY - currentY) * lerp;
 
     const img = document.getElementById('object-img');
     img.style.transition = 'none';
