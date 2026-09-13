@@ -144,16 +144,16 @@ function setupParallax() {
     targetX = Math.min(Math.max(targetX, minX), maxX);
     targetY = Math.min(Math.max(targetY, minY), maxY);
 
-    // La VITESSE à laquelle l'objet rattrape sa cible dépend :
-    // - de sa taille (un petit objet bouge moins vite qu'un gros, sinon il
-    //   semble glisser de façon disproportionnée et erratique)
-    // - de l'intensité de l'inclinaison actuelle (plus on incline fort, plus
-    //   ça accélère ; proche du neutre, ça ralentit)
-    const REFERENCE_HALF = 100; // ~demi-largeur d'un objet à taille "normale"
-    const sizeFactor = Math.min(1, Math.max(0.25, ((halfW + halfH) / 2) / REFERENCE_HALF));
-    const tiltMag = Math.min(1, Math.hypot(parallaxSmooth.x, parallaxSmooth.y));
-    const tiltFactor = 0.5 + tiltMag * 1.0; // 0.5x au neutre → 1.5x à fond
-    const lerp = Math.min(0.22, Math.max(0.025, 0.09 * sizeFactor * tiltFactor));
+    // La VITESSE à laquelle l'objet rattrape sa cible dépend UNIQUEMENT de
+    // la taille de l'objet (petit = plus lent). L'accélération avec une
+    // inclinaison forte est déjà naturelle avec un lerp exponentiel : plus le
+    // tilt est fort, plus la cible est loin, donc plus le déplacement par
+    // frame est grand, même à facteur constant. Ajouter un facteur supplémentaire
+    // basé sur le tilt créait un double amortissement qui faisait quasiment
+    // s'arrêter l'objet près du neutre (donc à chaque changement de direction).
+    const REFERENCE_HALF = 100; // ~demi-largeur d'un objet à taille "normale" (100%)
+    const sizeFactor = Math.min(1, Math.max(0.4, ((halfW + halfH) / 2) / REFERENCE_HALF));
+    const lerp = 0.12 * sizeFactor;
 
     // On glisse doucement vers la position cible (jamais de téléportation,
     // que ce soit pour le tilt ou pour un retour après un drag hors-cadre)
@@ -175,8 +175,8 @@ function setupParallax() {
     if (!state.objectVisible || isDragging) return;
     const normX = Math.min(Math.max((gammaRaw - baselineGamma) / MAX_TILT_X, -1), 1);
     const normY = Math.min(Math.max((betaRaw - baselineBeta) / MAX_TILT_Y, -1), 1);
-    parallaxSmooth.x += (normX - parallaxSmooth.x) * 0.08;
-    parallaxSmooth.y += (normY - parallaxSmooth.y) * 0.08;
+    parallaxSmooth.x += (normX - parallaxSmooth.x) * 0.15;
+    parallaxSmooth.y += (normY - parallaxSmooth.y) * 0.15;
 
     if (DEBUG_MODE) {
       const { halfW, halfH } = getObjectHalfSize();

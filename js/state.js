@@ -107,9 +107,17 @@ window.onload = () => {
     requestSensorPermissions();
   }
 
-  // Si le téléphone s'est éteint/rechargé pendant une performance, on relance
-  // directement sur le faux fond d'écran au lieu de revenir à la sélection.
-  if (localStorage.getItem('mp_inPerformance') === '1' && state.selectedObject) {
+  // Si le téléphone s'est éteint/rallumé RÉCEMMENT (écran verrouillé puis
+  // déverrouillé, app déjà lancée) pendant une performance, on relance
+  // directement sur le faux fond d'écran. Mais si l'app a été vraiment
+  // fermée puis rouverte plus tard (ou jamais eu d'activité récente), on
+  // revient normalement à la page de sélection.
+  const RESUME_WINDOW_MS = 5 * 60 * 1000; // 5 minutes
+  const lastActive = parseInt(localStorage.getItem('mp_lastActive') || '0', 10);
+  const recentEnough = (Date.now() - lastActive) < RESUME_WINDOW_MS;
+  if (localStorage.getItem('mp_inPerformance') === '1' && state.selectedObject && recentEnough) {
     launch();
+  } else {
+    try { localStorage.removeItem('mp_inPerformance'); } catch(e) {}
   }
 };

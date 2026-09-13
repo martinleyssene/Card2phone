@@ -215,7 +215,10 @@ async function onVisibilityChange() {
   if (document.hidden) {
     // Le téléphone s'éteint ou l'app passe en arrière-plan : on NE quitte
     // plus la performance, pour que l'app soit encore sur le faux fond
-    // d'écran au réveil du téléphone.
+    // d'écran au réveil du téléphone. On horodate ce moment pour distinguer,
+    // au prochain démarrage, un simple réveil d'écran (récent) d'une vraie
+    // réouverture de l'app après fermeture (ancien/absent).
+    try { localStorage.setItem('mp_lastActive', Date.now().toString()); } catch(e) {}
     return;
   }
   // Le système relâche automatiquement le wake lock à l'extinction ; on le
