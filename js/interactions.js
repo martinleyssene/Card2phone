@@ -18,6 +18,8 @@ function setupDragAndZoom() {
     dragOffsetY = currentY - window.innerHeight / 2;
     parallaxSmooth.x = 0;
     parallaxSmooth.y = 0;
+    parallaxFilteredTarget.x = currentX;
+    parallaxFilteredTarget.y = currentY;
     checkIfOutOfBounds();
   }
 
@@ -144,21 +146,26 @@ function setupParallax() {
     targetX = Math.min(Math.max(targetX, minX), maxX);
     targetY = Math.min(Math.max(targetY, minY), maxY);
 
-    // La VITESSE à laquelle l'objet rattrape sa cible dépend UNIQUEMENT de
-    // la taille de l'objet (petit = plus lent). L'accélération avec une
-    // inclinaison forte est déjà naturelle avec un lerp exponentiel : plus le
-    // tilt est fort, plus la cible est loin, donc plus le déplacement par
-    // frame est grand, même à facteur constant. Ajouter un facteur supplémentaire
-    // basé sur le tilt créait un double amortissement qui faisait quasiment
-    // s'arrêter l'objet près du neutre (donc à chaque changement de direction).
+    // Second étage de lissage : la cible elle-même tourne en douceur au lieu
+    // de changer de direction d'un coup, ce qui arrondit les changements de
+    // sens (sans risque de rebond/oscillation, contrairement à un système
+    // "ressort" — ici on ne fait qu'enchaîner deux lissages simples).
+    parallaxFilteredTarget.x += (targetX - parallaxFilteredTarget.x) * 0.2;
+    parallaxFilteredTarget.y += (targetY - parallaxFilteredTarget.y) * 0.2;
+
+    // La VITESSE à laquelle l'objet rattrape sa cible (filtrée) dépend
+    // UNIQUEMENT de la taille de l'objet (petit = plus lent). L'accélération
+    // avec une inclinaison forte est déjà naturelle avec un lerp exponentiel :
+    // plus le tilt est fort, plus la cible est loin, donc plus le déplacement
+    // par frame est grand, même à facteur constant.
     const REFERENCE_HALF = 100; // ~demi-largeur d'un objet à taille "normale" (100%)
     const sizeFactor = Math.min(1, Math.max(0.4, ((halfW + halfH) / 2) / REFERENCE_HALF));
     const lerp = 0.12 * sizeFactor;
 
-    // On glisse doucement vers la position cible (jamais de téléportation,
+    // On glisse doucement vers la cible filtrée (jamais de téléportation,
     // que ce soit pour le tilt ou pour un retour après un drag hors-cadre)
-    currentX += (targetX - currentX) * lerp;
-    currentY += (targetY - currentY) * lerp;
+    currentX += (parallaxFilteredTarget.x - currentX) * lerp;
+    currentY += (parallaxFilteredTarget.y - currentY) * lerp;
 
     const img = document.getElementById('object-img');
     img.style.transition = 'none';

@@ -57,6 +57,12 @@ let baselineBeta = 0;
 let dragOffsetX = 0;
 let dragOffsetY = 0;
 const parallaxSmooth = { x: 0, y: 0 };
+// Cible "filtrée" : un second étage de lissage appliqué à la cible du
+// parallaxe avant que currentX/Y ne la rattrape. Sans ça, un changement de
+// direction de l'inclinaison fait tourner la cible brutalement (angle net),
+// ce qui donnait l'impression d'un à-coup même avec un lissage sur la
+// position. Avec ce double lissage, la cible elle-même tourne en douceur.
+const parallaxFilteredTarget = { x: 0, y: 0 };
 const DEBUG_MODE = new URLSearchParams(location.search).has('debug');
 
 // ── INIT ──
@@ -107,17 +113,13 @@ window.onload = () => {
     requestSensorPermissions();
   }
 
-  // Si le téléphone s'est éteint/rallumé RÉCEMMENT (écran verrouillé puis
-  // déverrouillé, app déjà lancée) pendant une performance, on relance
-  // directement sur le faux fond d'écran. Mais si l'app a été vraiment
-  // fermée puis rouverte plus tard (ou jamais eu d'activité récente), on
-  // revient normalement à la page de sélection.
-  const RESUME_WINDOW_MS = 5 * 60 * 1000; // 5 minutes
-  const lastActive = parseInt(localStorage.getItem('mp_lastActive') || '0', 10);
-  const recentEnough = (Date.now() - lastActive) < RESUME_WINDOW_MS;
-  if (localStorage.getItem('mp_inPerformance') === '1' && state.selectedObject && recentEnough) {
+  // Si le téléphone s'est éteint/rallumé pendant une performance (écran
+  // verrouillé puis déverrouillé, app déjà lancée), on relance directement sur
+  // le faux fond d'écran. Le drapeau mp_inPerformance n'est actif QUE
+  // pendant une vraie performance (il est effacé dès qu'on sort via le
+  // swipe à 3 doigts), donc pas besoin de limite de temps : s'il est encore
+  // présent, c'est qu'on était bien en train de préparer/faire un tour.
+  if (localStorage.getItem('mp_inPerformance') === '1' && state.selectedObject) {
     launch();
-  } else {
-    try { localStorage.removeItem('mp_inPerformance'); } catch(e) {}
   }
 };
