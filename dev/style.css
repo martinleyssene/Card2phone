@@ -1,0 +1,263 @@
+    * { margin: 0; padding: 0; box-sizing: border-box; -webkit-tap-highlight-color: transparent; }
+
+    body {
+      background: #0a0a0a;
+      color: #fff;
+      font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif;
+      min-height: 100vh;
+      overflow: hidden;
+    }
+
+    #selection-page {
+      display: flex;
+      flex-direction: column;
+      height: 100vh;
+      padding: 20px;
+      overflow-y: auto;
+    }
+
+    h1 { font-size: 28px; font-weight: 700; letter-spacing: -0.5px; margin-bottom: 6px; }
+    .subtitle { font-size: 13px; color: #666; margin-bottom: 24px; }
+    .section-title {
+      font-size: 11px; font-weight: 600; color: #555;
+      letter-spacing: 1px; text-transform: uppercase; margin-bottom: 12px;
+    }
+
+    .objects-grid {
+      display: grid;
+      grid-template-columns: repeat(4, 1fr);
+      gap: 10px;
+      margin-bottom: 24px;
+    }
+
+    .object-item {
+      aspect-ratio: 2/3;
+      background: #1a1a1a;
+      border-radius: 10px;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      cursor: pointer;
+      border: 2px solid transparent;
+      transition: border-color 0.2s;
+      overflow: hidden;
+    }
+
+    .object-item.selected { border-color: #fff; }
+    .object-item img { width: 85%; height: 85%; object-fit: contain; }
+    .object-item.add-btn { border: 2px dashed #333; font-size: 28px; color: #444; }
+
+
+    #preview-img {
+      object-fit: contain;
+      transition: width 0.1s;
+      max-height: 160px;
+    }
+
+    #preview-placeholder {
+      color: #333;
+      font-size: 13px;
+    }
+
+    .settings-block {
+      background: #111;
+      border-radius: 14px;
+      padding: 16px;
+      margin-bottom: 16px;
+    }
+
+    .setting-row {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      padding: 10px 0;
+      border-bottom: 1px solid #1e1e1e;
+      gap: 10px;
+    }
+
+    .setting-row:last-child { border-bottom: none; }
+    .setting-label { font-size: 15px; flex: 1; }
+    .setting-value { font-size: 14px; color: #888; min-width: 40px; text-align: right; }
+
+    input[type="range"] {
+      -webkit-appearance: none;
+      appearance: none;
+      width: 120px;
+      height: 4px;
+      background: #333;
+      border-radius: 2px;
+      outline: none;
+    }
+
+    input[type="range"]::-webkit-slider-thumb {
+      -webkit-appearance: none;
+      width: 18px; height: 18px;
+      background: #fff;
+      border-radius: 50%;
+    }
+
+    .toggle {
+      width: 44px; height: 26px;
+      background: #333;
+      border-radius: 13px;
+      position: relative;
+      cursor: pointer;
+      transition: background 0.2s;
+      flex-shrink: 0;
+    }
+
+    .toggle.on { background: #4cd964; }
+
+    .toggle::after {
+      content: '';
+      position: absolute;
+      width: 22px; height: 22px;
+      background: #fff;
+      border-radius: 50%;
+      top: 2px; left: 2px;
+      transition: left 0.2s;
+    }
+
+    .toggle.on::after { left: 20px; }
+
+    .trigger-options {
+      display: grid;
+      grid-template-columns: repeat(3, 1fr);
+      gap: 8px;
+      margin-top: 10px;
+    }
+
+    .trigger-btn {
+      background: #1e1e1e;
+      border: 2px solid transparent;
+      border-radius: 10px;
+      padding: 10px 6px;
+      text-align: center;
+      font-size: 12px;
+      color: #888;
+      cursor: pointer;
+      transition: all 0.2s;
+    }
+
+    .trigger-btn.selected { border-color: #fff; color: #fff; }
+    .trigger-icon { font-size: 20px; margin-bottom: 4px; }
+
+    #launch-btn {
+      width: 100%;
+      padding: 18px;
+      background: #fff;
+      color: #000;
+      border: none;
+      border-radius: 14px;
+      font-size: 17px;
+      font-weight: 600;
+      cursor: pointer;
+      margin-top: 8px;
+      margin-bottom: 30px;
+    }
+
+    /* ── PERFORMANCE ── */
+    #performance-page {
+      display: none;
+      position: fixed;
+      inset: 0;
+      background: #000;
+      z-index: 100;
+      overflow: hidden;
+    }
+
+    #wallpaper {
+      position: fixed;
+      top: 0;
+      left: 0;
+      right: 0;
+      bottom: 0;
+      background-size: cover;
+      background-position: top left;
+      margin: 0;
+      padding: 0;
+    }
+
+    #status-mask {
+      position: fixed;
+      top: 0;
+      left: 0;
+      right: 0;
+      background: #000;
+      z-index: 15;
+      pointer-events: none;
+    }
+
+    #clock {
+  position: absolute;
+  top: -20px;
+  left: 0;
+  right: 0;
+  height: 44px;
+  display: none;
+  align-items: center;
+  justify-content: space-between;
+  padding: 0 16px;
+  z-index: 10;
+  pointer-events: none;
+  background: rgba(0,0,0,0.2);
+}
+
+#clock-time { font-size: 15px; font-weight: 600; }
+#clock-date { font-size: 13px; color: rgba(255,255,255,0.8); }
+
+    #object-display {
+      position: absolute;
+      inset: 0;
+      opacity: 0;
+      pointer-events: none;
+      z-index: 20;
+    }
+
+    #object-display.visible { opacity: 1; pointer-events: all; }
+    #object-display.hiding { opacity: 0 !important; pointer-events: none; transition: none !important; }
+
+    #object-img {
+      position: absolute;
+      object-fit: contain;
+      touch-action: none;
+      user-select: none;
+      -webkit-user-select: none;
+      cursor: grab;
+      -webkit-touch-callout: none;
+      max-width: none;
+      max-height: none;
+    }
+
+    .tap-zone {
+      position: absolute;
+      width: 80px;
+      height: 80px;
+      z-index: 60;
+      display: none;
+    }
+
+    #tap-tl { top: 0; left: 0; }
+    #tap-tr { top: 0; right: 0; }
+    #tap-bl { bottom: 0; left: 0; }
+    #tap-br { bottom: 0; right: 0; }
+    #tap-center {
+      top: 50%; left: 50%;
+      transform: translate(-50%, -50%);
+    }
+
+    #debug-overlay {
+      position: fixed;
+      top: 40px;
+      left: 10px;
+      z-index: 9999;
+      background: rgba(0,0,0,0.75);
+      color: #0f0;
+      font-family: monospace;
+      font-size: 11px;
+      padding: 8px;
+      border-radius: 6px;
+      white-space: pre;
+      pointer-events: none;
+      display: none;
+    }
