@@ -1,0 +1,40 @@
+name: Deploy vers GitHub Pages
+
+# Se déclenche automatiquement à chaque push sur main OU dev.
+on:
+  push:
+    branches:
+      - main
+      - dev
+
+permissions:
+  contents: write
+
+jobs:
+  deploy:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Récupérer le code
+        uses: actions/checkout@v4
+
+      # Push sur main → déployé à la racine (version stable)
+      # https://<utilisateur>.github.io/Card2phone/
+      - name: Déployer la version stable (main) à la racine
+        if: github.ref == 'refs/heads/main'
+        uses: peaceiris/actions-gh-pages@v3
+        with:
+          github_token: ${{ secrets.GITHUB_TOKEN }}
+          publish_dir: .
+          destination_dir: .
+          keep_files: true
+
+      # Push sur dev → déployé dans /dev/ (version test)
+      # https://<utilisateur>.github.io/Card2phone/dev/
+      - name: Déployer la version test (dev) dans /dev
+        if: github.ref == 'refs/heads/dev'
+        uses: peaceiris/actions-gh-pages@v3
+        with:
+          github_token: ${{ secrets.GITHUB_TOKEN }}
+          publish_dir: .
+          destination_dir: dev
+          keep_files: true
