@@ -63,7 +63,11 @@ const parallaxSmooth = { x: 0, y: 0 };
 // ce qui donnait l'impression d'un à-coup même avec un lissage sur la
 // position. Avec ce double lissage, la cible elle-même tourne en douceur.
 const parallaxFilteredTarget = { x: 0, y: 0 };
-const DEBUG_MODE = new URLSearchParams(location.search).has('debug');
+// Le mode debug s'active soit manuellement avec ?debug dans l'URL (marche
+// partout, y compris sur la version stable pour un dépannage ponctuel), soit
+// automatiquement sur la version test (/dev/), pour ne pas avoir à gérer une
+// 3e URL à retenir en plus de stable et test.
+const DEBUG_MODE = new URLSearchParams(location.search).has('debug') || location.pathname.includes('/dev/');
 
 // ── INIT ──
 window.onload = () => {
