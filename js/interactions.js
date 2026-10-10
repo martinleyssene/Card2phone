@@ -9,15 +9,20 @@ function setupDragAndZoom() {
   function onDragEnd() {
     dragging = false;
     isDragging = false;
-    // La carte reste où elle vient d'être lâchée : le tilt actuel devient le
-    // nouveau neutre, et l'écart au centre de l'écran est mémorisé pour que
-    // le parallaxe reparte de là au lieu de retirer la carte vers le centre.
-    baselineGamma = lastGamma;
-    baselineBeta = lastBeta;
-    dragOffsetX = currentX - window.innerWidth / 2;
-    dragOffsetY = currentY - window.innerHeight / 2;
-    parallaxSmooth.x = 0;
-    parallaxSmooth.y = 0;
+    // On NE recalibre PLUS l'inclinaison neutre ici : le faire rendait le
+    // parallaxe incohérent avec l'inclinaison réelle du téléphone si on
+    // lâchait la carte alors que le téléphone était penné (le "neutre" ne doit
+    // être calibré qu'une seule fois, à l'apparition de l'objet). À la place,
+    // on calcule dragOffsetX/Y pour que la cible du parallaxe retombe pile
+    // sur la position lâchée, sans toucher à la référence neutre d'origine.
+    const { halfW, halfH } = getObjectHalfSize();
+    const minX = halfW, maxX = window.innerWidth - halfW;
+    const statusH = computeStatusBarHeight();
+    const minY = halfH + statusH, maxY = window.innerHeight - halfH;
+    const ampX = (maxX - minX) / 2;
+    const ampY = (maxY - minY) / 2;
+    dragOffsetX = currentX - window.innerWidth / 2 - parallaxSmooth.x * ampX;
+    dragOffsetY = currentY - window.innerHeight / 2 - parallaxSmooth.y * ampY;
     parallaxFilteredTarget.x = currentX;
     parallaxFilteredTarget.y = currentY;
     checkIfOutOfBounds();
