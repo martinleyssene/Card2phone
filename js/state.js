@@ -74,6 +74,7 @@ window.onload = () => {
   loadFromStorage();
   renderObjects();
   populatePhoneSelect();
+  applyWallpaperPosition();
   const finetuneSlider = document.getElementById('wallpaper-finetune');
   if (finetuneSlider) {
     finetuneSlider.value = state.wallpaperFineTune;
