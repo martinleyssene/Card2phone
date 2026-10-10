@@ -139,6 +139,16 @@ function setupParallax() {
 
     let targetX, targetY;
     if (isParallaxAllowed() && state.settings.parallax) {
+      // Le décalage laissé par un drag manuel (dragOffsetX/Y) s'estompe
+      // progressivement. Sans ça, il reste un biais FIXE qui décale toute la
+      // plage de déplacement d'un côté : après un drag suivi d'un zoom, un
+      // côté de l'écran n'est alors plus jamais atteint (l'écart observé
+      // correspondait exactement à ce dragOffsetX figé). En l'estompant, il
+      // évite toujours le saut immédiat après le drag, mais la pleine
+      // amplitude des deux côtés se restaure d'elle-même après quelques
+      // secondes d'inclinaison normale.
+      dragOffsetX *= 0.98;
+      dragOffsetY *= 0.98;
       // Le tilt à fond (norm = ±1) correspond à ampX/ampY, en partant du
       // décalage laissé par un éventuel drag manuel (dragOffsetX/Y)
       targetX = window.innerWidth / 2 + dragOffsetX + parallaxSmooth.x * ampX;
