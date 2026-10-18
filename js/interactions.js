@@ -9,15 +9,22 @@ function setupDragAndZoom() {
   function onDragEnd() {
     dragging = false;
     isDragging = false;
-    // La carte reste où elle vient d'être lâchée : le tilt actuel devient le
-    // nouveau neutre, et l'écart au centre de l'écran est mémorisé pour que
-    // le parallaxe reparte de là au lieu de retirer la carte vers le centre.
-    baselineGamma = lastGamma;
-    baselineBeta = lastBeta;
-    dragOffsetX = currentX - window.innerWidth / 2;
-    dragOffsetY = currentY - window.innerHeight / 2;
-    parallaxSmooth.x = 0;
-    parallaxSmooth.y = 0;
+    // On NE recalibre PLUS l'inclinaison neutre ici : le faire rendait le
+    // parallaxe incohérent avec l'inclinaison réelle du téléphone si on
+    // lâchait la carte alors que le téléphone était penné (le "neutre" ne doit
+    // être calibré qu'une seule fois, à l'apparition de l'objet). À la place,
+    // on calcule dragOffsetX/Y pour que la cible du parallaxe retombe pile
+    // sur la position lâchée, sans toucher à la référence neutre d'origine.
+    const { halfW, halfH } = getObjectHalfSize();
+    const minX = halfW, maxX = window.innerWidth - halfW;
+    const statusH = computeStatusBarHeight();
+    const minY = halfH + statusH, maxY = window.innerHeight - halfH;
+    const ampX = (maxX - minX) / 2;
+    const ampY = (maxY - minY) / 2;
+    dragOffsetX = currentX - window.innerWidth / 2 - parallaxSmooth.x * ampX;
+    dragOffsetY = currentY - window.innerHeight / 2 - parallaxSmooth.y * ampY;
+    parallaxFilteredTarget.x = currentX;
+    parallaxFilteredTarget.y = currentY;
     checkIfOutOfBounds();
   }
 
@@ -132,6 +139,16 @@ function setupParallax() {
 
     let targetX, targetY;
     if (isParallaxAllowed() && state.settings.parallax) {
+      // Le décalage laissé par un drag manuel (dragOffsetX/Y) s'estompe
+      // progressivement. Sans ça, il reste un biais FIXE qui décale toute la
+      // plage de déplacement d'un côté : après un drag suivi d'un zoom, un
+      // côté de l'écran n'est alors plus jamais atteint (l'écart observé
+      // correspondait exactement à ce dragOffsetX figé). En l'estompant, il
+      // évite toujours le saut immédiat après le drag, mais la pleine
+      // amplitude des deux côtés se restaure d'elle-même après quelques
+      // secondes d'inclinaison normale.
+      dragOffsetX *= 0.98;
+      dragOffsetY *= 0.98;
       // Le tilt à fond (norm = ±1) correspond à ampX/ampY, en partant du
       // décalage laissé par un éventuel drag manuel (dragOffsetX/Y)
       targetX = window.innerWidth / 2 + dragOffsetX + parallaxSmooth.x * ampX;
@@ -144,21 +161,26 @@ function setupParallax() {
     targetX = Math.min(Math.max(targetX, minX), maxX);
     targetY = Math.min(Math.max(targetY, minY), maxY);
 
-    // La VITESSE à laquelle l'objet rattrape sa cible dépend UNIQUEMENT de
-    // la taille de l'objet (petit = plus lent). L'accélération avec une
-    // inclinaison forte est déjà naturelle avec un lerp exponentiel : plus le
-    // tilt est fort, plus la cible est loin, donc plus le déplacement par
-    // frame est grand, même à facteur constant. Ajouter un facteur supplémentaire
-    // basé sur le tilt créait un double amortissement qui faisait quasiment
-    // s'arrêter l'objet près du neutre (donc à chaque changement de direction).
+    // Second étage de lissage : la cible elle-même tourne en douceur au lieu
+    // de changer de direction d'un coup, ce qui arrondit les changements de
+    // sens (sans risque de rebond/oscillation, contrairement à un système
+    // "ressort" — ici on ne fait qu'enchaîner deux lissages simples).
+    parallaxFilteredTarget.x += (targetX - parallaxFilteredTarget.x) * 0.2;
+    parallaxFilteredTarget.y += (targetY - parallaxFilteredTarget.y) * 0.2;
+
+    // La VITESSE à laquelle l'objet rattrape sa cible (filtrée) dépend
+    // UNIQUEMENT de la taille de l'objet (petit = plus lent). L'accélération
+    // avec une inclinaison forte est déjà naturelle avec un lerp exponentiel :
+    // plus le tilt est fort, plus la cible est loin, donc plus le déplacement
+    // par frame est grand, même à facteur constant.
     const REFERENCE_HALF = 100; // ~demi-largeur d'un objet à taille "normale" (100%)
     const sizeFactor = Math.min(1, Math.max(0.4, ((halfW + halfH) / 2) / REFERENCE_HALF));
     const lerp = 0.12 * sizeFactor;
 
-    // On glisse doucement vers la position cible (jamais de téléportation,
+    // On glisse doucement vers la cible filtrée (jamais de téléportation,
     // que ce soit pour le tilt ou pour un retour après un drag hors-cadre)
-    currentX += (targetX - currentX) * lerp;
-    currentY += (targetY - currentY) * lerp;
+    currentX += (parallaxFilteredTarget.x - currentX) * lerp;
+    currentY += (parallaxFilteredTarget.y - currentY) * lerp;
 
     const img = document.getElementById('object-img');
     img.style.transition = 'none';

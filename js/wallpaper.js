@@ -67,8 +67,11 @@ function applyWallpaperPosition() {
   // réalité). On pose à la place un bandeau noir en haut, de la hauteur de la
   // vraie barre de statut, pour cacher celle -- fausse -- de la photo.
   const mask = document.getElementById('status-mask');
-  if (mask) mask.style.height = computeStatusBarHeight() + 'px';
+  const h = computeStatusBarHeight();
+  if (mask) mask.style.height = h + 'px';
   updatePhoneDetectInfo();
+  const finetuneInfo = document.getElementById('finetune-debug-info');
+  if (finetuneInfo) finetuneInfo.textContent = `Bandeau appliqué : ${h.toFixed(0)}px (base + réglage fin)`;
 }
 
 function updatePhoneDetectInfo() {
