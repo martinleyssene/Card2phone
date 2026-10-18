@@ -6,7 +6,16 @@ function renderObjects() {
     const div = document.createElement('div');
     div.className = 'object-item' + (state.selectedObject?.id === obj.id ? ' selected' : '');
     div.onclick = () => selectObject(obj);
-    div.innerHTML = `<img src="${obj.src}" alt="${obj.name}">`;
+    // Construit via le DOM (et non par concaténation de chaîne HTML) : obj.name
+    // vient du nom du fichier importé, choisi par qui a créé ce fichier, donc
+    // jamais sous confiance. .alt échappe automatiquement son contenu, alors
+    // qu'une interpolation dans innerHTML permettait d'y glisser un attribut
+    // événementiel exécutable (ex: un nom de fichier contenant
+    // "" onerror="..."") qui se serait exécuté à chaque réouverture de l'app.
+    const img = document.createElement('img');
+    img.src = obj.src;
+    img.alt = obj.name;
+    div.appendChild(img);
     grid.appendChild(div);
   });
   const addBtn = document.createElement('div');
