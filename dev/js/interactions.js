@@ -21,8 +21,8 @@ function setupDragAndZoom() {
     const minY = halfH + statusH, maxY = window.innerHeight - halfH;
     const ampX = (maxX - minX) / 2;
     const ampY = (maxY - minY) / 2;
-    dragOffsetX = currentX - window.innerWidth / 2 - parallaxSmooth.x * ampX;
-    dragOffsetY = currentY - window.innerHeight / 2 - parallaxSmooth.y * ampY;
+    dragOffsetX = currentX - window.innerWidth / 2 - parallaxSmooth.x * ampX * parallaxBoost(ampX);
+    dragOffsetY = currentY - window.innerHeight / 2 - parallaxSmooth.y * ampY * parallaxBoost(ampY);
     parallaxFilteredTarget.x = currentX;
     parallaxFilteredTarget.y = currentY;
     checkIfOutOfBounds();
@@ -118,13 +118,41 @@ function isParallaxAllowed() {
   return halfW < window.innerWidth / 2 && halfH < window.innerHeight / 2;
 }
 
+// ── RÉGLAGES DE FLUIDITÉ DU PARALLAXE (à ajuster ici) ──
+// Lissage du capteur : plus le téléphone bouge vite, moins on lisse (réactif) ;
+// quand il est presque immobile, on lisse beaucoup (anti-tremblement de la main).
+const SMOOTH_MIN_CUTOFF = 1.0; // lissage au repos (plus petit = plus doux, mais plus de retard)
+const SMOOTH_SPEED_GAIN = 2.5; // plus grand = devient réactif plus vite dès que ça bouge
+// Vitesse à laquelle l'objet rattrape sa cible, à 60 images/s (c'était 0.12)
+const FOLLOW_BASE = 0.16;
+// Un gros objet a peu de place pour bouger : même penché, il parcourt peu de
+// pixels, d'où l'impression de lenteur. On amplifie donc son mouvement pour
+// qu'il aille aussi vite qu'un objet de taille moyenne (il atteint juste le bord
+// avec moins d'inclinaison).
+const AMP_REFERENCE = 120; // demi-course (px) d'un objet « moyen »
+const MAX_AMP_BOOST = 3;   // amplification maximale
+
+function parallaxBoost(amp) {
+  return Math.min(MAX_AMP_BOOST, Math.max(1, AMP_REFERENCE / Math.max(amp, 1)));
+}
+
 function setupParallax() {
   let animFrame = null;
+  let lastFrameTime = 0;
+  let lastOrientationTime = 0;
+  const rawPrev = { x: 0, y: 0 };
+  const rawSpeed = { x: 0, y: 0 };
   const MAX_TILT_X = 14; // degrés d'inclinaison gauche-droite (depuis ta position de départ) pour atteindre le bord
   const MAX_TILT_Y = 11; // degrés d'inclinaison avant-arrière (depuis ta position de départ) pour atteindre le bord
 
   function animate() {
     animFrame = requestAnimationFrame(animate);
+    // Temps écoulé depuis la dernière image, en « images à 60/s » (1 = 16,7 ms).
+    // Sert à garder la même vitesse même si l'iPhone passe à 30 images/s
+    // (mode économie d'énergie, par exemple).
+    const nowT = performance.now();
+    const frames = lastFrameTime ? Math.min((nowT - lastFrameTime) / 16.667, 3) : 1;
+    lastFrameTime = nowT;
     if (!state.objectVisible || isDragging) return;
 
     const { halfW, halfH } = getObjectHalfSize();
@@ -151,8 +179,8 @@ function setupParallax() {
       dragOffsetY *= 0.98;
       // Le tilt à fond (norm = ±1) correspond à ampX/ampY, en partant du
       // décalage laissé par un éventuel drag manuel (dragOffsetX/Y)
-      targetX = window.innerWidth / 2 + dragOffsetX + parallaxSmooth.x * ampX;
-      targetY = window.innerHeight / 2 + dragOffsetY + parallaxSmooth.y * ampY;
+      targetX = window.innerWidth / 2 + dragOffsetX + parallaxSmooth.x * ampX * parallaxBoost(ampX);
+      targetY = window.innerHeight / 2 + dragOffsetY + parallaxSmooth.y * ampY * parallaxBoost(ampY);
     } else {
       targetX = window.innerWidth / 2 + dragOffsetX;
       targetY = window.innerHeight / 2 + dragOffsetY;
@@ -165,8 +193,9 @@ function setupParallax() {
     // de changer de direction d'un coup, ce qui arrondit les changements de
     // sens (sans risque de rebond/oscillation, contrairement à un système
     // "ressort" — ici on ne fait qu'enchaîner deux lissages simples).
-    parallaxFilteredTarget.x += (targetX - parallaxFilteredTarget.x) * 0.2;
-    parallaxFilteredTarget.y += (targetY - parallaxFilteredTarget.y) * 0.2;
+    const followTarget = 1 - Math.pow(1 - 0.2, frames);
+    parallaxFilteredTarget.x += (targetX - parallaxFilteredTarget.x) * followTarget;
+    parallaxFilteredTarget.y += (targetY - parallaxFilteredTarget.y) * followTarget;
 
     // La VITESSE à laquelle l'objet rattrape sa cible (filtrée) dépend
     // UNIQUEMENT de la taille de l'objet (petit = plus lent). L'accélération
@@ -175,7 +204,7 @@ function setupParallax() {
     // par frame est grand, même à facteur constant.
     const REFERENCE_HALF = 100; // ~demi-largeur d'un objet à taille "normale" (100%)
     const sizeFactor = Math.min(1, Math.max(0.4, ((halfW + halfH) / 2) / REFERENCE_HALF));
-    const lerp = 0.12 * sizeFactor;
+    const lerp = 1 - Math.pow(1 - FOLLOW_BASE * sizeFactor, frames);
 
     // On glisse doucement vers la cible filtrée (jamais de téléportation,
     // que ce soit pour le tilt ou pour un retour après un drag hors-cadre)
@@ -194,11 +223,27 @@ function setupParallax() {
     const betaRaw = e.beta || 0;
     lastGamma = gammaRaw;
     lastBeta = betaRaw;
+    // Temps réel entre deux mesures du capteur, en secondes
+    const nowMs = performance.now();
+    const gapSec = lastOrientationTime ? (nowMs - lastOrientationTime) / 1000 : 0;
+    lastOrientationTime = nowMs;
+    const dtSec = gapSec > 0 ? Math.min(Math.max(gapSec, 0.004), 0.1) : 1 / 60;
     if (!state.objectVisible || isDragging) return;
     const normX = Math.min(Math.max((gammaRaw - baselineGamma) / MAX_TILT_X, -1), 1);
     const normY = Math.min(Math.max((betaRaw - baselineBeta) / MAX_TILT_Y, -1), 1);
-    parallaxSmooth.x += (normX - parallaxSmooth.x) * 0.15;
-    parallaxSmooth.y += (normY - parallaxSmooth.y) * 0.15;
+    // Lissage adaptatif : la part de lissage dépend de la vitesse du geste.
+    // (Ce n'est PAS l'ancien multiplicateur d'intensité de l'inclinaison : ici
+    // on ne ralentit jamais l'objet, on réduit seulement le retard quand ça bouge.)
+    const alphaFor = (axis, norm) => {
+      const speed = gapSec > 0.1 ? 0 : Math.abs(norm - rawPrev[axis]) / dtSec;
+      rawPrev[axis] = norm;
+      rawSpeed[axis] += (speed - rawSpeed[axis]) * 0.3;
+      const cutoff = SMOOTH_MIN_CUTOFF + SMOOTH_SPEED_GAIN * rawSpeed[axis];
+      const tau = 1 / (2 * Math.PI * cutoff);
+      return dtSec / (dtSec + tau);
+    };
+    parallaxSmooth.x += (normX - parallaxSmooth.x) * alphaFor('x', normX);
+    parallaxSmooth.y += (normY - parallaxSmooth.y) * alphaFor('y', normY);
 
     if (DEBUG_MODE) {
       const { halfW, halfH } = getObjectHalfSize();
