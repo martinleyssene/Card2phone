@@ -89,6 +89,11 @@
       <span class="setting-label">Mode répétition</span>
       <div class="toggle" id="toggle-repeat" onclick="toggleSetting(this)"></div>
     </div>
+    <div class="setting-row">
+      <span class="setting-label">Mode hors ligne</span>
+      <button id="offline-btn" onclick="prepareOffline()" style="background:#222;color:#fff;border:none;padding:6px 12px;border-radius:8px;font-size:13px">Préparer</button>
+    </div>
+    <p id="offline-status" style="font-size:11px;color:#666;margin:-6px 0 10px;">Vérification…</p>
   </div>
 
   <p class="section-title">Déclencheur</p>
@@ -190,6 +195,7 @@
 <script src="js/settings.js"></script>
 <script src="js/performance.js"></script>
 <script src="js/interactions.js"></script>
+<script src="js/offline.js"></script>
 
 </body>
 </html>
