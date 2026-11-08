@@ -21,8 +21,9 @@ function setupDragAndZoom() {
     const minY = halfH + statusH, maxY = window.innerHeight - halfH;
     const ampX = (maxX - minX) / 2;
     const ampY = (maxY - minY) / 2;
-    dragOffsetX = currentX - window.innerWidth / 2 - parallaxSmooth.x * ampX * parallaxBoost(ampX);
-    dragOffsetY = currentY - window.innerHeight / 2 - parallaxSmooth.y * ampY * parallaxBoost(ampY);
+    const gains = parallaxGains(halfW, halfH, ampX, ampY);
+    dragOffsetX = currentX - window.innerWidth / 2 - parallaxOffset(parallaxSmooth.x, ampX, gains.x);
+    dragOffsetY = currentY - window.innerHeight / 2 - parallaxOffset(parallaxSmooth.y, ampY, gains.y);
     parallaxFilteredTarget.x = currentX;
     parallaxFilteredTarget.y = currentY;
     checkIfOutOfBounds();
@@ -136,6 +137,36 @@ function parallaxBoost(amp) {
   return Math.min(MAX_AMP_BOOST, Math.max(1, AMP_REFERENCE / Math.max(amp, 1)));
 }
 
+// ── VITESSE SELON LA TAILLE DE L'OBJET ──
+// Un petit objet (ou un objet dézoomé) a tout l'écran pour bouger : à
+// inclinaison égale il parcourt donc beaucoup plus de pixels qu'un gros et
+// paraît bien trop rapide. On réduit son « gain » : il faut pencher davantage
+// pour atteindre le bord (qui reste atteignable), mais à chaque degré il se
+// déplace moins vite.
+const SMALL_REFERENCE_HALF = 100; // demi-taille (px) à partir de laquelle le gain est normal
+const MIN_SMALL_GAIN = 0.4;       // gain d'un tout petit objet (0.4 = 2,5x moins de déplacement par degré)
+
+function parallaxGains(halfW, halfH, ampX, ampY) {
+  const avgHalf = (halfW + halfH) / 2;
+  const small = Math.min(1, Math.max(MIN_SMALL_GAIN, avgHalf / SMALL_REFERENCE_HALF));
+  return { x: small * parallaxBoost(ampX), y: small * parallaxBoost(ampY) };
+}
+
+// Déplacement (en px, depuis le centre) pour une inclinaison normalisée donnée,
+// limité à la course disponible pour que l'objet ne sorte jamais de l'écran.
+function parallaxOffset(norm, amp, gain) {
+  return Math.min(amp, Math.max(-amp, norm * amp * gain));
+}
+
+// Gains de l'objet tel qu'il est affiché maintenant (taille et zoom actuels).
+function currentParallaxGains() {
+  const { halfW, halfH } = getObjectHalfSize();
+  const statusH = computeStatusBarHeight();
+  const ampX = (window.innerWidth - 2 * halfW) / 2;
+  const ampY = (window.innerHeight - 2 * halfH - statusH) / 2;
+  return parallaxGains(halfW, halfH, ampX, ampY);
+}
+
 function setupParallax() {
   let animFrame = null;
   let lastFrameTime = 0;
@@ -179,8 +210,9 @@ function setupParallax() {
       dragOffsetY *= 0.98;
       // Le tilt à fond (norm = ±1) correspond à ampX/ampY, en partant du
       // décalage laissé par un éventuel drag manuel (dragOffsetX/Y)
-      targetX = window.innerWidth / 2 + dragOffsetX + parallaxSmooth.x * ampX * parallaxBoost(ampX);
-      targetY = window.innerHeight / 2 + dragOffsetY + parallaxSmooth.y * ampY * parallaxBoost(ampY);
+      const gains = parallaxGains(halfW, halfH, ampX, ampY);
+      targetX = window.innerWidth / 2 + dragOffsetX + parallaxOffset(parallaxSmooth.x, ampX, gains.x);
+      targetY = window.innerHeight / 2 + dragOffsetY + parallaxOffset(parallaxSmooth.y, ampY, gains.y);
     } else {
       targetX = window.innerWidth / 2 + dragOffsetX;
       targetY = window.innerHeight / 2 + dragOffsetY;
@@ -229,8 +261,13 @@ function setupParallax() {
     lastOrientationTime = nowMs;
     const dtSec = gapSec > 0 ? Math.min(Math.max(gapSec, 0.004), 0.1) : 1 / 60;
     if (!state.objectVisible || isDragging) return;
-    const normX = Math.min(Math.max((gammaRaw - baselineGamma) / MAX_TILT_X, -1), 1);
-    const normY = Math.min(Math.max((betaRaw - baselineBeta) / MAX_TILT_Y, -1), 1);
+    // L'inclinaison est limitée juste à ce qu'il faut pour atteindre le bord
+    // avec le gain actuel de l'objet (1/gain) : ça évite une zone morte où l'objet
+    // reste collé au bord alors qu'on a déjà commencé à repencher.
+    const g = currentParallaxGains();
+    const limX = 1 / g.x, limY = 1 / g.y;
+    const normX = Math.min(Math.max((gammaRaw - baselineGamma) / MAX_TILT_X, -limX), limX);
+    const normY = Math.min(Math.max((betaRaw - baselineBeta) / MAX_TILT_Y, -limY), limY);
     // Lissage adaptatif : la part de lissage dépend de la vitesse du geste.
     // (Ce n'est PAS l'ancien multiplicateur d'intensité de l'inclinaison : ici
     // on ne ralentit jamais l'objet, on réduit seulement le retard quand ça bouge.)
